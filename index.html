@@ -3,40 +3,188 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LazyForge</title>
-    <style>
-      body {
-        margin: 0;
-        background: #111217;
-        color: #e8eaf0;
-        font-family: Arial, sans-serif;
-        display: grid;
-        place-items: center;
-        min-height: 100vh;
-      }
-      .box {
-        border: 1px solid #2a3142;
-        border-radius: 12px;
-        padding: 24px;
-        width: min(680px, 92vw);
-        background: #171922;
-      }
-      h1 {
-        margin: 0 0 10px;
-      }
-      .lazy {
-        color: #45d5ff;
-      }
-      .forge {
-        color: #f3be38;
-      }
-    </style>
+    <title>LazyForge — Getting Started</title>
+    <meta
+      name="description"
+      content="LazyForge é uma terminal IDE para modelagem de schema SQL. Guia de instalação, comandos e tipos de banco."
+    />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="box">
-      <h1><span class="lazy">Lazy</span><span class="forge">Forge</span></h1>
-      <p>Página inicial do projeto.</p>
-      <p>Em breve: documentação completa, fluxos e guias de uso.</p>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <strong class="brand"
+          ><span class="lazy">Lazy</span><span class="forge">Forge</span></strong
+        >
+        <nav>
+          <a href="#getting-started">Getting Started</a>
+          <a href="#command-map">Comandos</a>
+          <a href="#database-types">Tipos de banco</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <p class="eyebrow">Terminal database schema IDE</p>
+        <h1>
+          <span class="lazy">Lazy</span><span class="forge">Forge</span> —
+          schema design sem sair do terminal
+        </h1>
+        <p class="lead">
+          Fluxo keyboard-driven para criar tabelas, colunas, relações PK/FK e
+          exportar DDL SQL, com visualização em tempo real.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn primary" href="#install">Instalar</a>
+          <a class="btn ghost" href="#command-map">Mapa de comandos</a>
+        </div>
+
+        <div class="terminal-banner" aria-label="LazyForge startup banner">
+          <div class="terminal-top">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">LazyForge — terminal</span>
+          </div>
+          <pre><code><span class="lazy">██╗      █████╗ ███████╗██╗   ██╗
+██║     ██╔══██╗╚══███╔╝╚██╗ ██╔╝
+██║     ███████║  ███╔╝  ╚████╔╝ </span>
+<span class="forge">██║     ██╔══██║ ███╔╝    ╚██╔╝
+███████╗██║  ██║███████╗   ██║
+╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝</span>
+
+<span class="muted">forge database schemas without leaving your terminal
+v0.1.0 · lazy by design</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <main class="container docs-layout">
+      <aside class="toc">
+        <h3>Nesta página</h3>
+        <a href="#getting-started">Getting Started</a>
+        <a href="#requirements">Requisitos</a>
+        <a href="#install">Instalação</a>
+        <a href="#first-run">Primeiro uso</a>
+        <a href="#workspace">Workspace local</a>
+        <a href="#command-map">Mapa de comandos</a>
+        <a href="#database-types">Tipos de banco</a>
+      </aside>
+
+      <article class="docs">
+        <section id="getting-started">
+          <h2>Getting Started</h2>
+          <p>
+            A proposta do LazyForge é simples: modelar schema SQL em terminal,
+            usando comandos curtos, visualização em grafo e export em DDL.
+          </p>
+        </section>
+
+        <section id="requirements">
+          <h2>Requisitos</h2>
+          <ul>
+            <li>Dart SDK instalado.</li>
+            <li>Terminal com suporte a cores ANSI.</li>
+            <li>Windows, macOS ou Linux.</li>
+          </ul>
+        </section>
+
+        <section id="install">
+          <h2>Instalação</h2>
+          <p>Instalação global via Git:</p>
+          <pre><code>dart pub global activate --source git https://github.com/dte005/lazy_forges.git
+lazy_forge</code></pre>
+          <p>Instalação local para desenvolvimento:</p>
+          <pre><code>dart pub get
+dart run bin/lazy_forge.dart</code></pre>
+        </section>
+
+        <section id="first-run">
+          <h2>Primeiro uso</h2>
+          <ol>
+            <li>Abra uma pasta do seu projeto no terminal.</li>
+            <li>Execute <code>lazy_forge</code>.</li>
+            <li>Crie um projeto e escolha o banco (postgres/mysql/sqlite).</li>
+            <li>Digite comandos no editor para montar o schema.</li>
+            <li>Use <code>export</code> para gerar o SQL DDL.</li>
+          </ol>
+        </section>
+
+        <section id="workspace">
+          <h2>Workspace local</h2>
+          <p>
+            O LazyForge usa o diretório atual onde você executa o comando como
+            base de trabalho.
+          </p>
+          <ul>
+            <li>Projetos salvos: <code>./lazyforge_projects</code></li>
+            <li>Exports DDL: <code>./&lt;nome_do_arquivo&gt;.sql</code></li>
+          </ul>
+        </section>
+
+        <section id="command-map">
+          <h2>Mapa de comandos</h2>
+
+          <h3>Criação e remoção</h3>
+          <pre><code>create table &lt;table&gt; [--autoincrement]
+delete table &lt;table&gt;
+drop table &lt;table&gt;</code></pre>
+
+          <h3>Colunas</h3>
+          <pre><code>add column &lt;table&gt; &lt;column&gt; &lt;type&gt; [as pk] [options(v1|v2)] [description(text)]
+add column &lt;column&gt; type &lt;type&gt; to &lt;table&gt; [as pk] [options(v1|v2)] [description(text)]
+add columns &lt;table&gt; &lt;col1 type [as pk] ...; col2 type ...&gt;</code></pre>
+
+          <h3>Relacionamentos</h3>
+          <pre><code>set pk &lt;table&gt; &lt;column&gt;
+add fk &lt;table&gt; &lt;column&gt; references &lt;ref_table&gt; &lt;ref_column&gt;</code></pre>
+
+          <h3>Renomear/alterar</h3>
+          <pre><code>rename table &lt;old&gt; to &lt;new&gt;
+change table &lt;old&gt; to &lt;new&gt;
+rename column &lt;table&gt; &lt;old&gt; to &lt;new&gt;
+change column &lt;table&gt; &lt;old&gt; to &lt;new&gt;
+alter column &lt;table&gt; &lt;column&gt; type &lt;new_type&gt; [options(v1|v2)]
+change column &lt;table&gt; &lt;column&gt; type &lt;new_type&gt; [options(v1|v2)]</code></pre>
+
+          <h3>Inspeção e export</h3>
+          <pre><code>set database &lt;postgres|mysql|sqlite&gt;
+show database
+show types
+show tables
+history
+export [nome_arquivo.sql]</code></pre>
+        </section>
+
+        <section id="database-types">
+          <h2>Tipos de base de dados</h2>
+          <div class="db-grid">
+            <article class="db-card">
+              <h3>Postgres</h3>
+              <p>
+                smallint, integer, bigint, serial, bigserial, numeric, decimal,
+                real, double, boolean, char, varchar, text, date, time,
+                timestamp, timestamptz, uuid, json, jsonb, bytea, enum
+              </p>
+            </article>
+            <article class="db-card">
+              <h3>MySQL</h3>
+              <p>
+                tinyint, smallint, mediumint, int, bigint, decimal, float,
+                double, bit, char, varchar, text, tinytext, mediumtext, longtext,
+                date, time, datetime, timestamp, year, json, binary, varbinary,
+                blob, tinyblob, mediumblob, longblob, boolean, enum
+              </p>
+            </article>
+            <article class="db-card">
+              <h3>SQLite</h3>
+              <p>integer, real, text, blob, numeric, boolean, date, datetime</p>
+            </article>
+          </div>
+        </section>
+      </article>
     </main>
   </body>
 </html>
