@@ -56,15 +56,22 @@ a:hover {
   font-size: 0.95rem;
 }
 .brand {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 1.18rem;
+  white-space: nowrap;
 }
 .brand-icon {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   display: block;
+  flex: 0 0 auto;
+}
+.brand-text {
+  display: inline-block;
+  line-height: 1;
 }
 .lazy {
   color: var(--lazy);
