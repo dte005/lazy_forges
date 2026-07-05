@@ -1,0 +1,16 @@
+# Normalize text files with LF for cross-platform consistency on GitHub
+* text=auto eol=lf
+
+# Keep binary assets untouched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.7z binary
+*.jar binary
+*.exe binary
+*.dll binary
