@@ -31,6 +31,21 @@ class TableGraphLayoutComponent extends StatelessComponent {
 
   final SchemaState schemaState;
 
+  static const List<Color> _relationPalette = <Color>[
+    Colors.cyan,
+    Colors.yellow,
+    Colors.green,
+    Colors.magenta,
+    Colors.blue,
+    Colors.red,
+    Colors.brightCyan,
+    Colors.brightYellow,
+    Colors.brightGreen,
+    Colors.brightMagenta,
+    Colors.brightBlue,
+    Colors.brightRed,
+  ];
+
   @override
   Component build(BuildContext context) {
     final GraphLayoutResult layout = const GraphLayoutEngine().build(
@@ -45,6 +60,19 @@ class TableGraphLayoutComponent extends StatelessComponent {
     for (final table in schemaState.tables) {
       final specs = _measureTable(table);
       tableSpecs[table.name.toLowerCase()] = specs;
+    }
+
+    final edgeColorByIndex = <int, Color>{};
+    final columnColorByKey = <String, Color>{};
+    for (var i = 0; i < layout.edges.length; i++) {
+      final edge = layout.edges[i];
+      final color = _relationPalette[i % _relationPalette.length];
+      edgeColorByIndex[i] = color;
+
+      final sourceKey = _columnKey(edge.sourceTable, edge.sourceColumn);
+      final targetKey = _columnKey(edge.targetTable, edge.targetColumn);
+      columnColorByKey.putIfAbsent(sourceKey, () => color);
+      columnColorByKey.putIfAbsent(targetKey, () => color);
     }
 
     const rowGap = 3;
@@ -138,51 +166,82 @@ class TableGraphLayoutComponent extends StatelessComponent {
       canvasHeight,
       (_) => List.filled(canvasWidth, ' '),
     );
+    final colorCanvas = List.generate(
+      canvasHeight,
+      (_) => List<Color?>.filled(canvasWidth, null),
+    );
 
-    void drawAt(int x, int y, String char) {
+    void drawAt(int x, int y, String char, {Color? color}) {
       final cx = x + offsetX;
       final cy = y + offsetY;
       if (cy < 0 || cy >= canvas.length) return;
       if (cx < 0 || cx >= canvas[cy].length) return;
 
       final current = canvas[cy][cx];
-      if (current == char) return;
+      if (current == char) {
+        if (color != null) {
+          colorCanvas[cy][cx] = color;
+        }
+        return;
+      }
+
       if (current == ' ' || char == '>' || char == '<') {
         canvas[cy][cx] = char;
+        if (color != null) {
+          colorCanvas[cy][cx] = color;
+        }
         return;
       }
+
       if ((current == '-' && char == '|') || (current == '|' && char == '-')) {
         canvas[cy][cx] = '+';
+        if (color != null) {
+          colorCanvas[cy][cx] = color;
+        }
         return;
       }
-      if (current == '+') return;
+
+      if (current == '+') {
+        if (color != null && colorCanvas[cy][cx] == null) {
+          colorCanvas[cy][cx] = color;
+        }
+        return;
+      }
+
       if ('+'.contains(current) && '-|+'.contains(char)) {
+        if (color != null && colorCanvas[cy][cx] == null) {
+          colorCanvas[cy][cx] = color;
+        }
         return;
       }
+
       if ('-|+'.contains(current) && '-|+'.contains(char)) {
         canvas[cy][cx] = '+';
+        if (color != null) {
+          colorCanvas[cy][cx] = color;
+        }
       }
     }
 
-    void drawText(int x, int y, String text) {
+    void drawText(int x, int y, String text, {Color? color}) {
       for (var i = 0; i < text.length; i++) {
-        drawAt(x + i, y, text[i]);
+        drawAt(x + i, y, text[i], color: color);
       }
     }
 
-    void drawHorizontal(int y, int x1, int x2) {
+    void drawHorizontal(int y, int x1, int x2, {Color? color}) {
       final start = x1 <= x2 ? x1 : x2;
       final end = x1 <= x2 ? x2 : x1;
       for (var x = start; x <= end; x++) {
-        drawAt(x, y, '-');
+        drawAt(x, y, '-', color: color);
       }
     }
 
-    void drawVertical(int x, int y1, int y2) {
+    void drawVertical(int x, int y1, int y2, {Color? color}) {
       final start = y1 <= y2 ? y1 : y2;
       final end = y1 <= y2 ? y2 : y1;
       for (var y = start; y <= end; y++) {
-        drawAt(x, y, '|');
+        drawAt(x, y, '|', color: color);
       }
     }
 
@@ -245,7 +304,9 @@ class TableGraphLayoutComponent extends StatelessComponent {
           }
           final label = _buildColumnLabel(column, tags);
           final lineY = node.y + 3 + index;
-          drawText(node.x + 1, lineY, fit(label, innerWidth));
+          final relationColor =
+              columnColorByKey[_columnKey(node.table.name, column.name)];
+          drawText(node.x + 1, lineY, fit(label, innerWidth), color: relationColor);
           mutableMap[column.name.toLowerCase()] = lineY;
         }
       }
@@ -260,7 +321,9 @@ class TableGraphLayoutComponent extends StatelessComponent {
       );
     }
 
-    for (final edge in layout.edges) {
+    for (var edgeIndex = 0; edgeIndex < layout.edges.length; edgeIndex++) {
+      final edge = layout.edges[edgeIndex];
+      final edgeColor = edgeColorByIndex[edgeIndex];
       final source = nodesByName[edge.sourceTable.toLowerCase()];
       final target = nodesByName[edge.targetTable.toLowerCase()];
       if (source == null || target == null) continue;
@@ -278,25 +341,65 @@ class TableGraphLayoutComponent extends StatelessComponent {
         midX = sourceOutX - 2;
       }
 
-      drawHorizontal(sourceY, sourceOutX, midX);
-      drawVertical(midX, sourceY, targetY);
-      drawHorizontal(targetY, midX, targetInX);
-      drawAt(midX, sourceY, '+');
-      drawAt(midX, targetY, '+');
-      drawAt(targetInX, targetY, sourceToRight ? '>' : '<');
+      drawHorizontal(sourceY, sourceOutX, midX, color: edgeColor);
+      drawVertical(midX, sourceY, targetY, color: edgeColor);
+      drawHorizontal(targetY, midX, targetInX, color: edgeColor);
+      drawAt(midX, sourceY, '+', color: edgeColor);
+      drawAt(midX, targetY, '+', color: edgeColor);
+      drawAt(targetInX, targetY, sourceToRight ? '>' : '<', color: edgeColor);
     }
 
     final lines = <Component>[];
-    for (final row in canvas) {
-      final raw = row.join();
-      final line = raw.trimRight();
-      lines.add(Text(line.isEmpty ? ' ' : line));
+    for (var rowIndex = 0; rowIndex < canvas.length; rowIndex++) {
+      lines.add(_buildCanvasLine(canvas[rowIndex], colorCanvas[rowIndex]));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: lines,
     );
+  }
+
+  Component _buildCanvasLine(List<String> row, List<Color?> colors) {
+    var lastNonSpace = -1;
+    for (var i = row.length - 1; i >= 0; i--) {
+      if (row[i] != ' ') {
+        lastNonSpace = i;
+        break;
+      }
+    }
+
+    if (lastNonSpace == -1) {
+      return const Text(' ');
+    }
+
+    final segments = <Component>[];
+    var start = 0;
+    while (start <= lastNonSpace) {
+      final color = colors[start];
+      var end = start;
+      while (end + 1 <= lastNonSpace && colors[end + 1] == color) {
+        end += 1;
+      }
+
+      final text = row.sublist(start, end + 1).join();
+      if (color == null) {
+        segments.add(Text(text));
+      } else {
+        segments.add(
+          Text(
+            text,
+            style: TextStyle(color: color),
+          ),
+        );
+      }
+      start = end + 1;
+    }
+
+    if (segments.length == 1) {
+      return segments.first;
+    }
+    return Row(children: segments);
   }
 
   ({int width, int height, int innerWidth}) _measureTable(TableDef table) {
@@ -330,6 +433,10 @@ class TableGraphLayoutComponent extends StatelessComponent {
 
   int _max(int left, int right) => left > right ? left : right;
   int _min(int left, int right) => left < right ? left : right;
+
+  String _columnKey(String tableName, String columnName) {
+    return '${tableName.toLowerCase()}::${columnName.toLowerCase()}';
+  }
 
   String _buildColumnLabel(ColumnDef column, List<String> tags) {
     final enumText = column.enumOptions.isEmpty

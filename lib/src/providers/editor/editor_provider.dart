@@ -1,11 +1,20 @@
 import '../../model/schema_state.dart';
+import '../../storage/project_storage.dart';
 
 class EditorProvider {
-  EditorProvider({SchemaState? schemaState, CommandsProvider? commandsProvider})
-    : _schemaState = schemaState ?? SchemaState(),
-      _commandsProvider = commandsProvider ?? CommandsProvider();
+  EditorProvider({
+    required SchemaState schemaState,
+    required String projectName,
+    required ProjectStorage projectStorage,
+    CommandsProvider? commandsProvider,
+  }) : _schemaState = schemaState,
+       _projectName = projectName,
+       _projectStorage = projectStorage,
+       _commandsProvider = commandsProvider ?? CommandsProvider();
 
   final SchemaState _schemaState;
+  final String _projectName;
+  final ProjectStorage _projectStorage;
   final CommandsProvider _commandsProvider;
   final List<String> _commandHistory = [];
 
@@ -16,14 +25,6 @@ class EditorProvider {
   String get lastFeedback => _lastFeedback;
   bool get lastCommandFailed => _lastCommandFailed;
   List<String> get commandHistory => List.unmodifiable(_commandHistory);
-
-  void initializeEditorSchema() {
-    if (_schemaState.tables.isNotEmpty) return;
-    _schemaState.addTable('subjects');
-    _schemaState.addColumn('subjects', 'id', 'serial');
-    _schemaState.addColumn('subjects', 'name', 'varchar');
-    _schemaState.setPrimaryKey('subjects', 'id');
-  }
 
   void submitCommand(String rawCommand) {
     final command = rawCommand.trim();
@@ -49,9 +50,92 @@ class EditorProvider {
     }
 
     _commandHistory.add(command);
-    final result = _commandsProvider.handle(command, _schemaState);
-    _lastCommandFailed = !result.success;
-    _lastFeedback = result.message;
+    final parts = _splitChainedCommands(command);
+    if (parts.isEmpty) {
+      _lastCommandFailed = true;
+      _lastFeedback = 'Comando inválido. Use "help" para ver os formatos suportados.';
+      return;
+    }
+
+    final feedbackParts = <String>[];
+    var shouldPersist = false;
+
+    for (final part in parts) {
+      final result = _commandsProvider.handle(
+        part,
+        _schemaState,
+        projectName: _projectName,
+        projectStorage: _projectStorage,
+      );
+
+      feedbackParts.add(result.message);
+
+      if (!result.success) {
+        _lastCommandFailed = true;
+        _lastFeedback = feedbackParts.join(' | ');
+        return;
+      }
+
+      if (result.shouldPersist) {
+        shouldPersist = true;
+      }
+    }
+
+    if (shouldPersist) {
+      try {
+        _projectStorage.saveProject(_projectName, _schemaState);
+      } catch (error) {
+        _lastCommandFailed = true;
+        _lastFeedback = 'Comandos aplicados, mas falhou ao salvar projeto: $error';
+        return;
+      }
+    }
+
+    _lastCommandFailed = false;
+    _lastFeedback = feedbackParts.join(' | ');
+  }
+
+
+  List<String> _splitChainedCommands(String command) {
+    final parts = <String>[];
+    var depth = 0;
+    var start = 0;
+    var i = 0;
+
+    while (i < command.length) {
+      final char = command[i];
+      if (char == '(') {
+        depth += 1;
+        i += 1;
+        continue;
+      }
+      if (char == ')' && depth > 0) {
+        depth -= 1;
+        i += 1;
+        continue;
+      }
+
+      if (depth == 0 &&
+          i + 2 < command.length &&
+          command[i] == ' ' &&
+          command[i + 1] == '-' &&
+          command[i + 2] == ' ') {
+        final chunk = command.substring(start, i).trim();
+        if (chunk.isNotEmpty) {
+          parts.add(chunk);
+        }
+        start = i + 3;
+        i += 3;
+        continue;
+      }
+      i += 1;
+    }
+
+    final tail = command.substring(start).trim();
+    if (tail.isNotEmpty) {
+      parts.add(tail);
+    }
+    return parts;
   }
 }
 
@@ -64,12 +148,24 @@ class CommandsProvider {
     '^create\\s+table\\s+$_identifier(?:\\s+(--autoincrement))?\$',
     caseSensitive: false,
   );
+  static final RegExp _deleteTablePattern = RegExp(
+    '^delete\\s+table\\s+$_identifier\$',
+    caseSensitive: false,
+  );
+  static final RegExp _dropTablePattern = RegExp(
+    '^drop\\s+table\\s+$_identifier\$',
+    caseSensitive: false,
+  );
   static final RegExp _addColumnsPattern = RegExp(
     '^add\\s+columns?\\s+$_identifier\\s+(.+)\$',
     caseSensitive: false,
   );
+  static final RegExp _addColumnShortPattern = RegExp(
+    '^add\\s+column\\s+$_identifier\\s+$_identifier\\s+$_typeToken(\\s+as\\s+pk)?(?:\\s+options\\(([^)]*)\\))?(?:\\s+description\\(([^)]*)\\))?\$',
+    caseSensitive: false,
+  );
   static final RegExp _addColumnVerbosePattern = RegExp(
-    '^add\\s+column\\s+$_identifier\\s+type\\s+$_typeToken\\s+to\\s+$_identifier(?:\\s+options\\(([^)]*)\\))?(?:\\s+description\\(([^)]*)\\))?\$',
+    '^add\\s+column\\s+$_identifier\\s+type\\s+$_typeToken\\s+to\\s+$_identifier(\\s+as\\s+pk)?(?:\\s+options\\(([^)]*)\\))?(?:\\s+description\\(([^)]*)\\))?\$',
     caseSensitive: false,
   );
   static final RegExp _setPrimaryKeyPattern = RegExp(
@@ -108,12 +204,21 @@ class CommandsProvider {
     '^change\\s+column\\s+$_identifier\\s+$_identifier\\s+type\\s+$_typeToken(?:\\s+options\\(([^)]*)\\))?\$',
     caseSensitive: false,
   );
+  static final RegExp _exportPattern = RegExp(
+    r'^export(?:\s+([a-zA-Z0-9_-]+(?:\.sql)?))?$',
+    caseSensitive: false,
+  );
   static final RegExp _columnSpecPattern = RegExp(
-    '^$_identifier\\s+$_typeToken(?:\\s+options\\(([^)]*)\\))?(?:\\s+description\\(([^)]*)\\))?\$',
+    '^$_identifier\\s+$_typeToken(\\s+as\\s+pk)?(?:\\s+options\\(([^)]*)\\))?(?:\\s+description\\(([^)]*)\\))?\$',
     caseSensitive: false,
   );
 
-  EditorCommandResult handle(String command, SchemaState schemaState) {
+  EditorCommandResult handle(
+    String command,
+    SchemaState schemaState, {
+    required String projectName,
+    required ProjectStorage projectStorage,
+  }) {
     final lower = command.toLowerCase();
 
     if (lower == 'help') {
@@ -141,6 +246,21 @@ class CommandsProvider {
       );
     }
 
+    final exportMatch = _exportPattern.firstMatch(command);
+    if (exportMatch != null) {
+      final fileName = exportMatch.group(1);
+      try {
+        final path = projectStorage.exportDdl(
+          projectName,
+          schemaState,
+          fileName: fileName,
+        );
+        return EditorCommandResult.success('DDL exportado em: $path');
+      } catch (error) {
+        return EditorCommandResult.failure('Falha ao exportar DDL: $error');
+      }
+    }
+
     final createTableMatch = _createTablePattern.firstMatch(command);
     if (createTableMatch != null) {
       final tableName = createTableMatch.group(1)!;
@@ -148,12 +268,20 @@ class CommandsProvider {
       return _handleCreateTable(tableName, schemaState, autoIncrement: autoIncrement);
     }
 
-    final addColumnVerboseMatch = _addColumnVerbosePattern.firstMatch(command);
-    if (addColumnVerboseMatch != null) {
-      final columnName = addColumnVerboseMatch.group(1)!;
-      final type = addColumnVerboseMatch.group(2)!;
-      final tableName = addColumnVerboseMatch.group(3)!;
-      final optionsResult = _parseEnumOptions(addColumnVerboseMatch.group(4));
+    final deleteTableMatch =
+        _deleteTablePattern.firstMatch(command) ??
+        _dropTablePattern.firstMatch(command);
+    if (deleteTableMatch != null) {
+      final tableName = deleteTableMatch.group(1)!;
+      return _handleDeleteTable(tableName, schemaState);
+    }
+
+    final addColumnShortMatch = _addColumnShortPattern.firstMatch(command);
+    if (addColumnShortMatch != null) {
+      final tableName = addColumnShortMatch.group(1)!;
+      final columnName = addColumnShortMatch.group(2)!;
+      final type = addColumnShortMatch.group(3)!;
+      final optionsResult = _parseEnumOptions(addColumnShortMatch.group(5));
       if (!optionsResult.success) {
         return EditorCommandResult.failure(optionsResult.message);
       }
@@ -163,8 +291,33 @@ class CommandsProvider {
           _ColumnInputSpec(
             name: columnName,
             type: type,
+            asPrimaryKey: addColumnShortMatch.group(4) != null,
             enumOptions: optionsResult.options,
-            description: _cleanDescription(addColumnVerboseMatch.group(5)),
+            description: _cleanDescription(addColumnShortMatch.group(6)),
+          ),
+        ],
+        schemaState,
+      );
+    }
+
+    final addColumnVerboseMatch = _addColumnVerbosePattern.firstMatch(command);
+    if (addColumnVerboseMatch != null) {
+      final columnName = addColumnVerboseMatch.group(1)!;
+      final type = addColumnVerboseMatch.group(2)!;
+      final tableName = addColumnVerboseMatch.group(3)!;
+      final optionsResult = _parseEnumOptions(addColumnVerboseMatch.group(5));
+      if (!optionsResult.success) {
+        return EditorCommandResult.failure(optionsResult.message);
+      }
+      return _handleAddColumns(
+        tableName,
+        [
+          _ColumnInputSpec(
+            name: columnName,
+            type: type,
+            asPrimaryKey: addColumnVerboseMatch.group(4) != null,
+            enumOptions: optionsResult.options,
+            description: _cleanDescription(addColumnVerboseMatch.group(6)),
           ),
         ],
         schemaState,
@@ -269,11 +422,26 @@ class CommandsProvider {
     schemaState.addTable(tableName);
     if (autoIncrement) {
       _addAutoIncrementId(tableName, schemaState);
-      return EditorCommandResult.success(
-        'Tabela "$tableName" criada com id autoincrement.',
+      return const EditorCommandResult.success(
+        'Tabela criada com id autoincrement.',
+        shouldPersist: true,
       );
     }
-    return EditorCommandResult.success('Tabela "$tableName" criada com sucesso.');
+    return const EditorCommandResult.success(
+      'Tabela criada com sucesso.',
+      shouldPersist: true,
+    );
+  }
+
+  EditorCommandResult _handleDeleteTable(String tableName, SchemaState schemaState) {
+    final deleted = schemaState.deleteTable(tableName);
+    if (!deleted) {
+      return EditorCommandResult.failure('Tabela "$tableName" não encontrada.');
+    }
+    return const EditorCommandResult.success(
+      'Tabela removida com sucesso.',
+      shouldPersist: true,
+    );
   }
 
   void _addAutoIncrementId(String tableName, SchemaState schemaState) {
@@ -309,11 +477,12 @@ class CommandsProvider {
       }
       batchNames.add(normalizedName);
 
-      if (!schemaState.isColumnTypeAllowed(spec.type)) {
-        return _invalidTypeResult(spec.type, schemaState);
+      final normalizedType = _normalizeInputType(spec.type);
+      if (!schemaState.isColumnTypeAllowed(normalizedType)) {
+        return _invalidTypeResult(normalizedType, schemaState);
       }
 
-      final isEnum = _normalizeType(spec.type) == 'enum';
+      final isEnum = _normalizeType(normalizedType) == 'enum';
       final hasEnumOptions = spec.enumOptions.isNotEmpty;
       if (isEnum && !hasEnumOptions) {
         return EditorCommandResult.failure(
@@ -329,16 +498,21 @@ class CommandsProvider {
       schemaState.addColumn(
         table.name,
         spec.name,
-        spec.type,
+        normalizedType,
         enumOptions: spec.enumOptions,
         description: spec.description,
       );
+      if (spec.asPrimaryKey) {
+        schemaState.setPrimaryKey(table.name, spec.name);
+      }
+
       existingNames.add(normalizedName);
       added.add(spec.name);
     }
 
     return EditorCommandResult.success(
       'Colunas adicionadas em "$tableName": ${added.join(', ')}.',
+      shouldPersist: true,
     );
   }
 
@@ -366,7 +540,10 @@ class CommandsProvider {
     }
 
     schemaState.setPrimaryKey(table.name, column.name);
-    return EditorCommandResult.success('PK definida: "$tableName"."$columnName".');
+    return const EditorCommandResult.success(
+      'PK definida com sucesso.',
+      shouldPersist: true,
+    );
   }
 
   EditorCommandResult _handleAddForeignKey(
@@ -424,8 +601,9 @@ class CommandsProvider {
       targetTable.name,
       targetColumn.name,
     );
-    return EditorCommandResult.success(
-      'FK criada: "$tableName"."$columnName" -> "$referenceTableName"."$referenceColumnName".',
+    return const EditorCommandResult.success(
+      'FK criada com sucesso.',
+      shouldPersist: true,
     );
   }
 
@@ -447,6 +625,7 @@ class CommandsProvider {
     }
     return EditorCommandResult.success(
       'Database alterado para ${schemaState.databaseEngine.name}.',
+      shouldPersist: true,
     );
   }
 
@@ -464,7 +643,10 @@ class CommandsProvider {
     }
 
     schemaState.renameTable(current.name, newName);
-    return EditorCommandResult.success('Tabela renomeada: "$oldName" -> "$newName".');
+    return const EditorCommandResult.success(
+      'Tabela renomeada com sucesso.',
+      shouldPersist: true,
+    );
   }
 
   EditorCommandResult _handleRenameColumn(
@@ -489,8 +671,9 @@ class CommandsProvider {
     }
 
     schemaState.renameColumn(table.name, oldName, newName);
-    return EditorCommandResult.success(
-      'Coluna renomeada: "$tableName"."$oldName" -> "$newName".',
+    return const EditorCommandResult.success(
+      'Coluna renomeada com sucesso.',
+      shouldPersist: true,
     );
   }
 
@@ -511,11 +694,13 @@ class CommandsProvider {
         'Coluna "$columnName" não encontrada em "$tableName".',
       );
     }
-    if (!schemaState.isColumnTypeAllowed(newType)) {
-      return _invalidTypeResult(newType, schemaState);
+
+    final normalizedType = _normalizeInputType(newType);
+    if (!schemaState.isColumnTypeAllowed(normalizedType)) {
+      return _invalidTypeResult(normalizedType, schemaState);
     }
 
-    final isEnum = _normalizeType(newType) == 'enum';
+    final isEnum = _normalizeType(normalizedType) == 'enum';
     if (isEnum && enumOptions.isEmpty) {
       return const EditorCommandResult.failure(
         'Tipo enum exige options(v1|v2|...) no alter/change type.',
@@ -530,11 +715,12 @@ class CommandsProvider {
     schemaState.changeColumnType(
       table.name,
       column.name,
-      newType,
+      normalizedType,
       enumOptions: isEnum ? enumOptions : null,
     );
-    return EditorCommandResult.success(
-      'Tipo alterado: "$tableName"."$columnName" -> "$newType".',
+    return const EditorCommandResult.success(
+      'Tipo de coluna alterado com sucesso.',
+      shouldPersist: true,
     );
   }
 
@@ -558,11 +744,11 @@ class CommandsProvider {
       final match = _columnSpecPattern.firstMatch(chunk);
       if (match == null) {
         return _ColumnSpecsParseResult.failure(
-          'Formato inválido de coluna: "$chunk". Use "<coluna> <tipo> [options(...)] [description(...)]".',
+          'Formato inválido de coluna: "$chunk". Use "<coluna> <tipo> [as pk] [options(...)] [description(...)]".',
         );
       }
 
-      final optionsResult = _parseEnumOptions(match.group(3));
+      final optionsResult = _parseEnumOptions(match.group(4));
       if (!optionsResult.success) {
         return _ColumnSpecsParseResult.failure(optionsResult.message);
       }
@@ -571,8 +757,9 @@ class CommandsProvider {
         _ColumnInputSpec(
           name: match.group(1)!.trim(),
           type: match.group(2)!.trim(),
+          asPrimaryKey: match.group(3) != null,
           enumOptions: optionsResult.options,
-          description: _cleanDescription(match.group(4)),
+          description: _cleanDescription(match.group(5)),
         ),
       );
     }
@@ -593,13 +780,17 @@ class CommandsProvider {
         depth -= 1;
       } else if (depth == 0 && (char == ';' || char == ',')) {
         final part = payload.substring(start, i).trim();
-        if (part.isNotEmpty) specs.add(part);
+        if (part.isNotEmpty) {
+          specs.add(part);
+        }
         start = i + 1;
       }
     }
 
     final tail = payload.substring(start).trim();
-    if (tail.isNotEmpty) specs.add(tail);
+    if (tail.isNotEmpty) {
+      specs.add(tail);
+    }
     return specs;
   }
 
@@ -642,22 +833,32 @@ class CommandsProvider {
     return parenIndex == -1 ? normalized : normalized.substring(0, parenIndex);
   }
 
+  String _normalizeInputType(String type) {
+    final normalized = type.trim().toLowerCase();
+    if (normalized == 'string') {
+      return 'text';
+    }
+    return type.trim();
+  }
+
   String _buildHelpMessage(DatabaseEngine engine) {
     return 'DB atual: ${engine.name} | '
         'Comandos: create table <table> [--autoincrement] | '
-        'add column <table> <column> <type> [options(v1|v2)] [description(text)] | '
-        'add columns <table> <col1 type ...; col2 type ...> | '
-        'add column <column> type <type> to <table> [options(v1|v2)] [description(text)] | '
+        'delete table <table> | drop table <table> | '
+        'create table <table> - add column <table> id string as pk; name string | '
+        'add column <table> <column> <type> [as pk] [options(v1|v2)] [description(text)] | '
+        'add columns <table> <col1 type [as pk] ...; col2 type ...> | '
+        'add column <column> type <type> to <table> [as pk] [options(v1|v2)] [description(text)] | '
         'set pk <table> <column> | '
         'add fk <table> <column> references <ref_table> <ref_column> | '
-        'set database <postgres|mysql|sqlite> | show database | show types | '
+        'set database <postgres|mysql|sqlite> | show database | show types | show tables | '
         'rename table <old> to <new> | '
         'change table <old> to <new> | '
         'rename column <table> <old> to <new> | '
         'change column <table> <old> to <new> | '
         'alter column <table> <column> type <new_type> [options(v1|v2)] | '
         'change column <table> <column> type <new_type> [options(v1|v2)] | '
-        'history';
+        'export [nome_arquivo.sql] | history';
   }
 }
 
@@ -665,12 +866,14 @@ class _ColumnInputSpec {
   const _ColumnInputSpec({
     required this.name,
     required this.type,
+    this.asPrimaryKey = false,
     this.enumOptions = const <String>[],
     this.description,
   });
 
   final String name;
   final String type;
+  final bool asPrimaryKey;
   final List<String> enumOptions;
   final String? description;
 }
@@ -702,9 +905,13 @@ class _EnumOptionsParseResult {
 }
 
 class EditorCommandResult {
-  const EditorCommandResult.success(this.message) : success = true;
-  const EditorCommandResult.failure(this.message) : success = false;
+  const EditorCommandResult.success(this.message, {this.shouldPersist = false})
+    : success = true;
+  const EditorCommandResult.failure(this.message)
+    : success = false,
+      shouldPersist = false;
 
   final bool success;
   final String message;
+  final bool shouldPersist;
 }

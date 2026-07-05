@@ -1,4 +1,19 @@
 enum DatabaseEngine { postgres, mysql, sqlite }
+
+DatabaseEngine databaseEngineFromString(String? value) {
+  final normalized = value?.trim().toLowerCase();
+  switch (normalized) {
+    case 'postgres':
+      return DatabaseEngine.postgres;
+    case 'mysql':
+      return DatabaseEngine.mysql;
+    case 'sqlite':
+      return DatabaseEngine.sqlite;
+    default:
+      return DatabaseEngine.postgres;
+  }
+}
+
 class ColumnDef {
   String name;
   String type;
@@ -13,6 +28,30 @@ class ColumnDef {
     List<String>? enumOptions,
     this.description,
   }) : enumOptions = enumOptions ?? <String>[];
+
+  factory ColumnDef.fromJson(Map<String, dynamic> json) {
+    final rawOptions = json['enumOptions'];
+    final options = rawOptions is List
+        ? rawOptions.map((e) => e.toString()).toList()
+        : <String>[];
+    return ColumnDef(
+      name: (json['name'] as String?) ?? '',
+      type: (json['type'] as String?) ?? 'text',
+      isPrimaryKey: (json['isPrimaryKey'] as bool?) ?? false,
+      enumOptions: options,
+      description: json['description'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'type': type,
+      'isPrimaryKey': isPrimaryKey,
+      'enumOptions': enumOptions,
+      'description': description,
+    };
+  }
 }
 
 class ForeignKeyDef {
@@ -25,12 +64,29 @@ class ForeignKeyDef {
     required this.referenceTableName,
     required this.referenceColumnName,
   });
+
+  factory ForeignKeyDef.fromJson(Map<String, dynamic> json) {
+    return ForeignKeyDef(
+      columnName: (json['columnName'] as String?) ?? '',
+      referenceTableName: (json['referenceTableName'] as String?) ?? '',
+      referenceColumnName: (json['referenceColumnName'] as String?) ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'columnName': columnName,
+      'referenceTableName': referenceTableName,
+      'referenceColumnName': referenceColumnName,
+    };
+  }
 }
 
 /// Estado central: a lista de tabelas que existem no schema em memória.
 class SchemaState {
   final List<TableDef> tables = [];
   DatabaseEngine databaseEngine = DatabaseEngine.postgres;
+  SchemaState();
 
   static const Map<DatabaseEngine, Set<String>> _allowedTypesByEngine = {
     DatabaseEngine.postgres: {
@@ -100,6 +156,30 @@ class SchemaState {
     },
   };
 
+  factory SchemaState.fromJson(Map<String, dynamic> json) {
+    final state = SchemaState();
+    state.databaseEngine = databaseEngineFromString(json['databaseEngine'] as String?);
+
+    final rawTables = json['tables'];
+    if (rawTables is List) {
+      for (final rawTable in rawTables) {
+        if (rawTable is Map<String, dynamic>) {
+          state.tables.add(TableDef.fromJson(rawTable));
+        } else if (rawTable is Map) {
+          state.tables.add(TableDef.fromJson(rawTable.cast<String, dynamic>()));
+        }
+      }
+    }
+    return state;
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'databaseEngine': databaseEngine.name,
+      'tables': tables.map((t) => t.toJson()).toList(),
+    };
+  }
+
   void setDatabaseEngine(DatabaseEngine engine) {
     databaseEngine = engine;
   }
@@ -119,6 +199,19 @@ class SchemaState {
 
   void addTable(String name) {
     tables.add(TableDef(name: name));
+  }
+
+  bool deleteTable(String tableName) {
+    final target = findTableByName(tableName);
+    if (target == null) return false;
+
+    tables.remove(target);
+    for (final table in tables) {
+      table.foreignKeys.removeWhere(
+        (fk) => fk.referenceTableName.toLowerCase() == target.name.toLowerCase(),
+      );
+    }
+    return true;
   }
 
   void addColumn(
@@ -241,7 +334,7 @@ class SchemaState {
     column.type = newType;
     if (enumOptions != null) {
       column.enumOptions = List<String>.from(enumOptions);
-    } else if (newType.toLowerCase() != 'enum') {
+    } else if (_normalizeType(newType) != 'enum') {
       column.enumOptions = <String>[];
     }
     return true;
@@ -262,6 +355,69 @@ class SchemaState {
     column.description = (clean == null || clean.isEmpty) ? null : clean;
     return true;
   }
+
+  String toSqlDdl() {
+    final buffer = StringBuffer();
+    buffer.writeln('-- LazyForge SQL DDL');
+    buffer.writeln('-- Database: ${databaseEngine.name}');
+    buffer.writeln('');
+
+    for (final table in tables) {
+      buffer.writeln('CREATE TABLE ${table.name} (');
+      final items = <String>[];
+
+      for (final column in table.columns) {
+        if (column.description != null && column.description!.trim().isNotEmpty) {
+          items.add('  -- ${column.name}: ${column.description!.trim()}');
+        }
+        items.add('  ${_buildColumnSql(column)}');
+      }
+
+      for (final fk in table.foreignKeys) {
+        items.add(
+          '  FOREIGN KEY (${fk.columnName}) REFERENCES ${fk.referenceTableName}(${fk.referenceColumnName})',
+        );
+      }
+
+      for (var i = 0; i < items.length; i++) {
+        final suffix = i == items.length - 1 ? '' : ',';
+        buffer.writeln('${items[i]}$suffix');
+      }
+      buffer.writeln(');');
+      buffer.writeln('');
+    }
+
+    return buffer.toString();
+  }
+
+  String _buildColumnSql(ColumnDef column) {
+    final baseType = _normalizeType(column.type);
+    final typeSql = baseType == 'enum' ? 'TEXT' : column.type.toUpperCase();
+    final parts = <String>['${column.name} $typeSql'];
+
+    if (baseType == 'enum' && column.enumOptions.isNotEmpty) {
+      final values = column.enumOptions
+          .map((value) => "'${_escapeSql(value)}'")
+          .join(', ');
+      parts.add('CHECK (${column.name} IN ($values))');
+    }
+
+    if (column.isPrimaryKey) {
+      parts.add('PRIMARY KEY');
+    }
+
+    return parts.join(' ');
+  }
+
+  String _normalizeType(String type) {
+    final normalized = type.trim().toLowerCase();
+    final parenIndex = normalized.indexOf('(');
+    return parenIndex == -1 ? normalized : normalized.substring(0, parenIndex);
+  }
+
+  String _escapeSql(String value) {
+    return value.replaceAll("'", "''");
+  }
 }
 
 /// Representa uma tabela, com nome e lista de colunas.
@@ -276,4 +432,44 @@ class TableDef {
     List<ForeignKeyDef>? foreignKeys,
   }) : columns = columns ?? [],
        foreignKeys = foreignKeys ?? [];
+
+  factory TableDef.fromJson(Map<String, dynamic> json) {
+    final rawColumns = json['columns'];
+    final parsedColumns = <ColumnDef>[];
+    if (rawColumns is List) {
+      for (final raw in rawColumns) {
+        if (raw is Map<String, dynamic>) {
+          parsedColumns.add(ColumnDef.fromJson(raw));
+        } else if (raw is Map) {
+          parsedColumns.add(ColumnDef.fromJson(raw.cast<String, dynamic>()));
+        }
+      }
+    }
+
+    final rawForeignKeys = json['foreignKeys'];
+    final parsedForeignKeys = <ForeignKeyDef>[];
+    if (rawForeignKeys is List) {
+      for (final raw in rawForeignKeys) {
+        if (raw is Map<String, dynamic>) {
+          parsedForeignKeys.add(ForeignKeyDef.fromJson(raw));
+        } else if (raw is Map) {
+          parsedForeignKeys.add(ForeignKeyDef.fromJson(raw.cast<String, dynamic>()));
+        }
+      }
+    }
+
+    return TableDef(
+      name: (json['name'] as String?) ?? '',
+      columns: parsedColumns,
+      foreignKeys: parsedForeignKeys,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'columns': columns.map((c) => c.toJson()).toList(),
+      'foreignKeys': foreignKeys.map((f) => f.toJson()).toList(),
+    };
+  }
 }

@@ -2,20 +2,23 @@ import 'package:lazy_forge/src/components/editor/editor_component.dart';
 import 'package:lazy_forge/src/components/init/init_component.dart';
 import 'package:nocterm/nocterm.dart';
 import './model/enums.dart';
+import './storage/project_storage.dart';
 
 class LazyForgeApp extends StatefulComponent {
   const LazyForgeApp({super.key});
+  @override
 
   State<LazyForgeApp> createState() => _LazyForgeApp();
 }
 
 class _LazyForgeApp extends State<LazyForgeApp> {
   Screen _screen = Screen.init;
-  String? _selectedScreen;
+  final ProjectStorage _projectStorage = ProjectStorage();
+  LoadedProject? _activeProject;
 
-  void _openProject(String projectName) {
+  void _openProject(LoadedProject project) {
     setState(() {
-      _selectedScreen = projectName;
+      _activeProject = project;
       _screen = Screen.editor;
     });
   }
@@ -24,11 +27,22 @@ class _LazyForgeApp extends State<LazyForgeApp> {
   Component build(BuildContext context) {
     switch (_screen) {
       case Screen.init:
-        return InitComponent(onSelect: _openProject);
+        return InitComponent(
+          onSelect: _openProject,
+          projectStorage: _projectStorage,
+        );
       case Screen.editor:
-        return EditorComponent();
-      case _:
-        return InitComponent(onSelect: _openProject);
+        if (_activeProject == null) {
+          return InitComponent(
+            onSelect: _openProject,
+            projectStorage: _projectStorage,
+          );
+        }
+        return EditorComponent(
+          projectName: _activeProject!.name,
+          initialSchema: _activeProject!.schemaState,
+          projectStorage: _projectStorage,
+        );
     }
   }
 }
