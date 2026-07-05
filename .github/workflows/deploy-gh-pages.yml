@@ -3,7 +3,7 @@ name: Deploy LazyForge Page
 on:
   push:
     branches:
-      - master
+      - gh_page
   workflow_dispatch:
 
 permissions:
