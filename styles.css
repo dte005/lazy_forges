@@ -59,19 +59,15 @@ a:hover {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   font-size: 1.18rem;
   white-space: nowrap;
 }
 .brand-icon {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   display: block;
   flex: 0 0 auto;
-}
-.brand-text {
-  display: inline-block;
-  line-height: 1;
 }
 .lazy {
   color: var(--lazy);
