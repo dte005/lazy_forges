@@ -56,7 +56,15 @@ a:hover {
   font-size: 0.95rem;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.18rem;
+}
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 .lazy {
   color: var(--lazy);
@@ -87,15 +95,6 @@ h1 {
   max-width: 820px;
   margin: 14px 0 18px;
   color: #d6deef;
-}
-.hero-icon {
-  margin: 6px 0 18px;
-}
-.hero-icon img {
-  display: block;
-  width: min(380px, 62vw);
-  height: auto;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
 }
 .hero-actions {
   display: flex;
@@ -229,8 +228,5 @@ code {
   }
   .toc {
     position: static;
-  }
-  .hero-icon img {
-    width: min(300px, 80vw);
   }
 }
