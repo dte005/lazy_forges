@@ -225,6 +225,16 @@ code {
   margin: 0 0 8px;
   color: var(--accent);
 }
+.tech-line {
+  margin: 0;
+}
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: rgba(10, 13, 21, 0.85);
+  padding: 18px 0;
+  color: #b7c2df;
+  font-size: 0.95rem;
+}
 @media (max-width: 980px) {
   .docs-layout {
     grid-template-columns: 1fr;
