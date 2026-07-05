@@ -88,6 +88,15 @@ h1 {
   margin: 14px 0 18px;
   color: #d6deef;
 }
+.hero-icon {
+  margin: 6px 0 18px;
+}
+.hero-icon img {
+  display: block;
+  width: min(380px, 62vw);
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+}
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -220,5 +229,8 @@ code {
   }
   .toc {
     position: static;
+  }
+  .hero-icon img {
+    width: min(300px, 80vw);
   }
 }

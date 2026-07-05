@@ -1,0 +1,71 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1080 1080"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">LazyForge sleepy anvil icon</title>
+  <desc id="desc">Yellow anvil with sleeping eyes and cyan Z letters</desc>
+  <path
+    fill="#F3BE38"
+    d="M300 410h540c15 0 27 12 27 27v145c0 15-12 27-27 27H648v126h90c8 0 16 4 20 11l74 106c12 18-1 42-22 42H270c-21 0-34-24-22-42l74-106c4-7 12-11 20-11h90V609H300c-5 0-10-2-14-4L188 533c-12-9-11-27 2-34l98-47c4-2 8-3 12-3z"
+  />
+  <path
+    d="M440 515c18 12 40 12 58 0"
+    fill="none"
+    stroke="#121212"
+    stroke-width="20"
+    stroke-linecap="round"
+  />
+  <path
+    d="M560 515c18 12 40 12 58 0"
+    fill="none"
+    stroke="#121212"
+    stroke-width="20"
+    stroke-linecap="round"
+  />
+  <path
+    d="M315 806h410"
+    fill="none"
+    stroke="#121212"
+    stroke-width="20"
+    stroke-linecap="round"
+  />
+  <path
+    d="M315 844h410"
+    fill="none"
+    stroke="#121212"
+    stroke-width="20"
+    stroke-linecap="round"
+  />
+  <text
+    x="845"
+    y="370"
+    fill="#45D5FF"
+    font-size="86"
+    font-weight="700"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+  >
+    Z
+  </text>
+  <text
+    x="922"
+    y="300"
+    fill="#45D5FF"
+    font-size="60"
+    font-weight="700"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+  >
+    Z
+  </text>
+  <text
+    x="972"
+    y="247"
+    fill="#45D5FF"
+    font-size="42"
+    font-weight="700"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+  >
+    Z
+  </text>
+</svg>
