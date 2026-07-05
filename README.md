@@ -1,11 +1,34 @@
 # LazyForge
 
-LazyForge é uma IDE de terminal (TUI) em Dart para modelagem de schema de banco de dados com fluxo keyboard-driven.
+[![pub package](https://img.shields.io/pub/v/lazy_forge.svg)](https://pub.dev/packages/lazy_forge)
 
-- Página do projeto: https://dte005.github.io/lazy_forges/#database-types
+LazyForge é uma IDE de terminal (TUI) para modelagem de schema SQL com fluxo keyboard-driven, focada em velocidade de edição, visualização em tempo real e exportação de DDL.
+
+## Links oficiais
+
+- Site do projeto: https://dte005.github.io/lazy_forges/
+- Documentação da página (tipos de banco): https://dte005.github.io/lazy_forges/#database-types
+- Pacote no pub.dev: https://pub.dev/packages/lazy_forge
 - Repositório: https://github.com/dte005/lazy_forges
 
-## Instalação via pub.dev (após publicação)
+## Mídias do projeto
+
+![LazyForge — ícone principal](https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_sleep_icon.svg)
+
+![LazyForge — favicon](https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_favicon.svg)
+
+- Brand kit (PDF): https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_brand_kit.pdf
+
+## Principais capacidades
+
+- Criação, alteração e remoção de tabelas por comando.
+- Definição de colunas com tipos por engine de banco.
+- Relacionamentos PK/FK com visualização em grafo no terminal.
+- Seleção de engine (`postgres`, `mysql`, `sqlite`).
+- Exportação de schema para SQL DDL.
+- Histórico de comandos e atalhos de produtividade no editor.
+
+## Instalação (pub.dev)
 
 ```bash
 dart pub global activate lazy_forge
@@ -47,8 +70,8 @@ dart --enable-vm-service bin/lazy_forge.dart
 
 ## Persistência e export
 
-- Projetos são salvos em `./lazyforge_projects` (diretório atual de execução).
-- Export SQL é salvo no diretório atual.
+- Projetos são salvos automaticamente em `./lazyforge_projects` (diretório atual de execução).
+- Arquivos SQL exportados são gravados no diretório atual.
 
 ## Bancos suportados
 
