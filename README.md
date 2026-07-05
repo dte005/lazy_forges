@@ -1,88 +1,61 @@
 # LazyForge
 
-LazyForge é uma aplicação TUI (Terminal User Interface) em Dart para modelagem de schema de banco de dados direto no terminal.
+LazyForge é uma IDE de terminal (TUI) em Dart para modelagem de schema de banco de dados com fluxo keyboard-driven.
 
-A proposta é oferecer uma experiência keyboard-driven, inspirada em ferramentas como LazyGit e LazyVim: você edita estrutura de tabelas por comandos e vê o resultado em tempo real, sem depender de interface gráfica externa.
+- Página do projeto: https://dte005.github.io/lazy_forges/#database-types
+- Repositório: https://github.com/dte005/lazy_forges
 
-## Status do projeto
+## Instalação via pub.dev (após publicação)
 
-Projeto em fase inicial (protótipo funcional).
-
-Hoje já existe:
-- app TUI rodando com `nocterm`;
-- navegação entre tela inicial e editor;
-- estado de schema em memória (`SchemaState`, `TableDef`, `ColumnDef`);
-- renderização de tabela e colunas no editor;
-- atualização reativa da UI ao adicionar colunas.
-
-Ainda em evolução:
-- parser de comandos (`create table`, `add column`, `export schema`, `export erd`);
-- exportação DDL SQL;
-- exportação Mermaid ER diagram;
-- refinamento de UX e fluxo completo de edição.
-
-## Objetivo do MVP
-
-- Criar/remover tabelas e colunas via comando de texto.
-- Visualizar o schema em tempo real na TUI.
-- Exportar o schema como SQL DDL.
-- Exportar o schema como Mermaid ERD.
-
-## Stack técnica
-
-- Dart `^3.11.4`
-- [nocterm](https://pub.dev/packages/nocterm) `^0.8.0`
-
-## Como rodar localmente
-
-1. Instale dependências:
-
-```bash path=null start=null
-dart pub get
+```bash
+dart pub global activate lazy_forge
+lazy_forge
 ```
 
-2. Rode o app:
+## Execução local (desenvolvimento)
 
-```bash path=null start=null
+```bash
+dart pub get
 dart run bin/lazy_forge.dart
 ```
 
-Para desenvolvimento com hot reload:
+Com hot reload:
 
-```bash path=null start=null
+```bash
 dart --enable-vm-service bin/lazy_forge.dart
 ```
 
-## Controles atuais (protótipo)
+## Comandos principais
 
-Tela inicial:
-- `↑` / `↓`: muda projeto selecionado
-- `Enter`: entra no editor
+- `create table <table> [--autoincrement]`
+- `delete table <table>` / `drop table <table>`
+- `add column <table> <column> <type> [as pk] [options(v1|v2)] [description(text)]`
+- `add columns <table> <col1 type [as pk] ...; col2 type ...>`
+- `add column <column> type <type> to <table> [as pk] [options(v1|v2)] [description(text)]`
+- `set pk <table> <column>`
+- `add fk <table> <column> references <ref_table> <ref_column>`
+- `rename table <old> to <new>`
+- `rename column <table> <old> to <new>`
+- `alter column <table> <column> type <new_type> [options(v1|v2)]`
+- `set database <postgres|mysql|sqlite>`
+- `show database`
+- `show types`
+- `show tables`
+- `export [nome_arquivo.sql]`
+- `history`
+- `help`
 
-Editor:
-- `Espaço`: adiciona uma coluna de exemplo na tabela `subjects`
+## Persistência e export
 
-Saída:
-- atualmente via `Ctrl + C`
+- Projetos são salvos em `./lazyforge_projects` (diretório atual de execução).
+- Export SQL é salvo no diretório atual.
 
-## Estrutura atual do projeto
+## Bancos suportados
 
-- `bin/lazy_forge.dart`: entrypoint da aplicação
-- `lib/lazy_forge.dart`: barrel público
-- `lib/src/main.dart`: componente raiz e troca de telas
-- `lib/src/model/`: estado e modelos de schema
-- `lib/src/components/`: componentes de UI (init/editor/sidebar)
-- `test/lazy_forge_test.dart`: base inicial de testes
+- PostgreSQL
+- MySQL
+- SQLite
 
-## Roadmap (curto prazo)
+## Licença
 
-- Implementar parser de comandos no domínio de comandos.
-- Conectar comandos ao `SchemaState`.
-- Adicionar exportadores:
-  - SQL DDL
-  - Mermaid ERD
-- Melhorar experiência de navegação e feedback de erros.
-
-## Contribuição
-
-Issues e sugestões são bem-vindas para evoluir o projeto.
+MIT.
