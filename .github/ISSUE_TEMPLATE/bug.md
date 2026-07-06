@@ -1,8 +1,8 @@
 ---
-name: Lazyforge_issue
+name: Bug
 about: Reportar um comportamento inesperado ou erro no LazyForge
-title: ''
-labels: bug, documentation, good first issue, refactor
+title: "[bug]"
+labels: bug
 assignees: ''
 
 ---
