@@ -1,6 +1,6 @@
 # LazyForge
 
-[![pub package](https://img.shields.io/pub/v/lazy_forge.svg)](https://pub.dev/packages/lazy_forge)
+[![pub package](https://img.shields.io/pub/v/lazy_forge.svg)](https://pub.dev/packages/lazy_forge) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 LazyForge é uma IDE de terminal (TUI) para modelagem de schema SQL com fluxo keyboard-driven, focada em velocidade de edição, visualização em tempo real e exportação de DDL.
 
