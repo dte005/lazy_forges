@@ -15,9 +15,6 @@ LazyForge é uma IDE de terminal (TUI) para modelagem de schema SQL com fluxo ke
 
 <img src="https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_sleep_icon.svg" alt="LazyForge — ícone principal" width="220" />
 
-- Favicon: https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_favicon.svg
-- Brand kit (PDF): https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_brand_kit.pdf
-
 ## Principais capacidades
 
 - Criação, alteração e remoção de tabelas por comando.
