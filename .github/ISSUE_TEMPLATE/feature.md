@@ -1,7 +1,7 @@
 ---
 name: Feature
 about: Reportar ideia de funcionalidade no LazyForge
-title: ''
+title: "[feature]"
 labels: enhancement
 assignees: ''
 
