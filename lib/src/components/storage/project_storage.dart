@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../model/schema_state.dart';
+import '../../shared/models/enums.dart';
+import '../editor/models/schema_model.dart';
 
 class ProjectSummary {
   const ProjectSummary({
@@ -61,7 +62,7 @@ class ProjectStorage {
         final updatedAt = updatedAtRaw == null
             ? DateTime.fromMillisecondsSinceEpoch(0)
             : DateTime.tryParse(updatedAtRaw) ??
-                DateTime.fromMillisecondsSinceEpoch(0);
+                  DateTime.fromMillisecondsSinceEpoch(0);
 
         summaries.add(
           ProjectSummary(
@@ -75,7 +76,9 @@ class ProjectStorage {
       }
     }
 
-    summaries.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    summaries.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
     return summaries;
   }
 
@@ -116,9 +119,14 @@ class ProjectStorage {
     final updatedAtRaw = parsed['updatedAt'] as String?;
     final updatedAt = updatedAtRaw == null
         ? DateTime.fromMillisecondsSinceEpoch(0)
-        : DateTime.tryParse(updatedAtRaw) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        : DateTime.tryParse(updatedAtRaw) ??
+              DateTime.fromMillisecondsSinceEpoch(0);
 
-    return LoadedProject(name: cleanName, schemaState: schema, updatedAt: updatedAt);
+    return LoadedProject(
+      name: cleanName,
+      schemaState: schema,
+      updatedAt: updatedAt,
+    );
   }
 
   void saveProject(String projectName, SchemaState schemaState) {
@@ -135,8 +143,11 @@ class ProjectStorage {
   }) {
     _ensureBaseDirectories();
     final cleanProjectName = _validateProjectName(projectName);
-    final normalizedFileName = _normalizeSqlFileName(fileName ?? cleanProjectName);
-    final outputPath = '${Directory.current.path}$_separator$normalizedFileName';
+    final normalizedFileName = _normalizeSqlFileName(
+      fileName ?? cleanProjectName,
+    );
+    final outputPath =
+        '${Directory.current.path}$_separator$normalizedFileName';
     final file = File(outputPath);
     file.writeAsStringSync(schemaState.toSqlDdl());
     return outputPath;

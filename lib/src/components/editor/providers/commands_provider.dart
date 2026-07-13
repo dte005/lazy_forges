@@ -1,7 +1,7 @@
-import '../../../model/enums.dart';
-import '../../../model/schema_state.dart';
-import '../../../storage/project_storage.dart';
+import '../../../shared/models/enums.dart';
+import '../../storage/project_storage.dart';
 import '../models/editor_model.dart';
+import '../models/schema_model.dart';
 
 class CommandsProvider {
   static const String _identifier = r'([a-zA-Z_][a-zA-Z0-9_]*)';

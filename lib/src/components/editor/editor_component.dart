@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:nocterm/nocterm.dart';
 
-import '../../model/schema_state.dart';
 import '../../services/clipboard_service.dart';
-import '../../storage/project_storage.dart';
+import '../storage/project_storage.dart';
 import './components/sidebar/sidebar_component.dart';
 import './components/table/table_component.dart';
 import './components/vertical_divider/vertical_divider_component.dart';
+import 'models/schema_model.dart';
 import 'providers/editor_provider.dart';
 
 class EditorComponent extends StatefulComponent {

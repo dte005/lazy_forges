@@ -1,4 +1,5 @@
-import '../../../../model/schema_state.dart';
+import '../../models/schema_model.dart';
+
 class GraphRelationEdge {
   const GraphRelationEdge({
     required this.sourceTable,

@@ -1,5 +1,6 @@
 import 'package:nocterm/nocterm.dart';
-import '../../../../model/schema_state.dart';
+
+import '../../models/schema_model.dart';
 import './graph_layout.dart';
 
 class _TableNodeLayout {
@@ -140,8 +141,12 @@ class TableGraphLayoutComponent extends StatelessComponent {
       if (source == null || target == null) continue;
 
       final sourceToRight = target.centerX >= source.centerX;
-      final sourceOutX = sourceToRight ? (source.x + source.width) : (source.x - 1);
-      final targetInX = sourceToRight ? (target.x - 1) : (target.x + target.width);
+      final sourceOutX = sourceToRight
+          ? (source.x + source.width)
+          : (source.x - 1);
+      final targetInX = sourceToRight
+          ? (target.x - 1)
+          : (target.x + target.width);
       var midX = (sourceOutX + targetInX) ~/ 2;
 
       if (sourceToRight && targetInX <= sourceOutX) {
@@ -306,7 +311,12 @@ class TableGraphLayoutComponent extends StatelessComponent {
           final lineY = node.y + 3 + index;
           final relationColor =
               columnColorByKey[_columnKey(node.table.name, column.name)];
-          drawText(node.x + 1, lineY, fit(label, innerWidth), color: relationColor);
+          drawText(
+            node.x + 1,
+            lineY,
+            fit(label, innerWidth),
+            color: relationColor,
+          );
           mutableMap[column.name.toLowerCase()] = lineY;
         }
       }
@@ -331,8 +341,12 @@ class TableGraphLayoutComponent extends StatelessComponent {
       final sourceY = source.columnAnchorY(edge.sourceColumn);
       final targetY = target.columnAnchorY(edge.targetColumn);
       final sourceToRight = target.centerX >= source.centerX;
-      final sourceOutX = sourceToRight ? (source.x + source.width) : (source.x - 1);
-      final targetInX = sourceToRight ? (target.x - 1) : (target.x + target.width);
+      final sourceOutX = sourceToRight
+          ? (source.x + source.width)
+          : (source.x - 1);
+      final targetInX = sourceToRight
+          ? (target.x - 1)
+          : (target.x + target.width);
       var midX = (sourceOutX + targetInX) ~/ 2;
 
       if (sourceToRight && targetInX <= sourceOutX) {
@@ -386,12 +400,7 @@ class TableGraphLayoutComponent extends StatelessComponent {
       if (color == null) {
         segments.add(Text(text));
       } else {
-        segments.add(
-          Text(
-            text,
-            style: TextStyle(color: color),
-          ),
-        );
+        segments.add(Text(text, style: TextStyle(color: color)));
       }
       start = end + 1;
     }
@@ -443,7 +452,8 @@ class TableGraphLayoutComponent extends StatelessComponent {
         ? ''
         : ' {${column.enumOptions.join('|')}}';
     final suffix = tags.isEmpty ? '' : ' [${tags.join('|')}]';
-    final descriptionText = (column.description == null || column.description!.isEmpty)
+    final descriptionText =
+        (column.description == null || column.description!.isEmpty)
         ? ''
         : ' -- ${column.description}';
     return '${column.name}: ${column.type}$enumText$suffix$descriptionText';

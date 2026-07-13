@@ -1,5 +1,23 @@
 enum Screen { init, editor }
 
+enum DatabaseEngine {
+  postgres('postgres'),
+  mysql('mysql'),
+  sqlite('sqlite');
+
+  const DatabaseEngine(this.label);
+
+  final String label;
+
+  static DatabaseEngine fromString(String? value) {
+    final normalized = value?.trim().toLowerCase();
+    return DatabaseEngine.values.firstWhere(
+      (e) => e.label == normalized,
+      orElse: () => DatabaseEngine.postgres,
+    );
+  }
+}
+
 class EnumOptionsParseResult {
   const EnumOptionsParseResult.success(this.options)
     : success = true,

@@ -1,5 +1,5 @@
-import '../../../model/schema_state.dart';
-import '../../../storage/project_storage.dart';
+import '../../storage/project_storage.dart';
+import '../models/schema_model.dart';
 import './commands_provider.dart';
 
 class EditorProvider {
