@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:nocterm/nocterm.dart';
 
 import '../../services/clipboard_service.dart';
-import '../storage/project_storage.dart';
+import '../../services/storage/project_storage.dart';
 import './components/sidebar/sidebar_component.dart';
 import './components/table/table_component.dart';
 import './components/vertical_divider/vertical_divider_component.dart';

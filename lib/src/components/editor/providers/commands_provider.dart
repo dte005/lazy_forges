@@ -1,5 +1,5 @@
+import '../../../services/storage/project_storage.dart';
 import '../../../shared/models/enums.dart';
-import '../../storage/project_storage.dart';
 import '../models/editor_model.dart';
 import '../models/schema_model.dart';
 
@@ -616,10 +616,10 @@ class CommandsProvider {
     );
   }
 
-  ColumnSpecsParseResult _parseColumnSpecs(String payload) {
+  EnumColumnSpecsParseResult _parseColumnSpecs(String payload) {
     final chunks = _splitSpecs(payload);
     if (chunks.isEmpty) {
-      return const ColumnSpecsParseResult.failure(
+      return const EnumColumnSpecsParseResult.failure(
         'Nenhuma coluna detectada. Exemplo: add columns <table> id int; name varchar(255)',
       );
     }
@@ -628,14 +628,14 @@ class CommandsProvider {
     for (final chunk in chunks) {
       final match = _columnSpecPattern.firstMatch(chunk);
       if (match == null) {
-        return ColumnSpecsParseResult.failure(
+        return EnumColumnSpecsParseResult.failure(
           'Formato inválido de coluna: "$chunk". Use "<coluna> <tipo> [as pk] [options(...)] [description(...)]".',
         );
       }
 
       final optionsResult = _parseEnumOptions(match.group(4));
       if (!optionsResult.success) {
-        return ColumnSpecsParseResult.failure(optionsResult.message);
+        return EnumColumnSpecsParseResult.failure(optionsResult.message);
       }
 
       specs.add(
@@ -649,7 +649,7 @@ class CommandsProvider {
       );
     }
 
-    return ColumnSpecsParseResult.success(specs);
+    return EnumColumnSpecsParseResult.success(specs);
   }
 
   List<String> _splitSpecs(String payload) {

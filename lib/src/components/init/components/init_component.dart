@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:nocterm/nocterm.dart';
 
-import '../../shared/models/enums.dart';
-import '../storage/project_storage.dart';
+import '../../../services/storage/models/project_model.dart';
+import '../../../services/storage/project_storage.dart';
+import '../../../shared/models/enums.dart';
 
 class InitComponent extends StatefulComponent {
   const InitComponent({

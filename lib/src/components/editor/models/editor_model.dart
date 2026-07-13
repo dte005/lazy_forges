@@ -13,16 +13,3 @@ class ColumnInputSpec {
   final List<String> enumOptions;
   final String? description;
 }
-
-class ColumnSpecsParseResult {
-  const ColumnSpecsParseResult.success(this.specs)
-    : success = true,
-      message = '';
-  const ColumnSpecsParseResult.failure(this.message)
-    : success = false,
-      specs = const <ColumnInputSpec>[];
-
-  final bool success;
-  final String message;
-  final List<ColumnInputSpec> specs;
-}

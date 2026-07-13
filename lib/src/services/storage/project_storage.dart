@@ -1,32 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../components/editor/models/schema_model.dart';
 import '../../shared/models/enums.dart';
-import '../editor/models/schema_model.dart';
-
-class ProjectSummary {
-  const ProjectSummary({
-    required this.name,
-    required this.databaseEngine,
-    required this.updatedAt,
-  });
-
-  final String name;
-  final DatabaseEngine databaseEngine;
-  final DateTime updatedAt;
-}
-
-class LoadedProject {
-  const LoadedProject({
-    required this.name,
-    required this.schemaState,
-    required this.updatedAt,
-  });
-
-  final String name;
-  final SchemaState schemaState;
-  final DateTime updatedAt;
-}
+import 'models/project_model.dart';
 
 class ProjectStorage {
   static final RegExp _projectNamePattern = RegExp(r'^[a-zA-Z0-9_-]+$');

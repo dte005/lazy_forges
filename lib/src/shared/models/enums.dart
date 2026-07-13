@@ -1,3 +1,5 @@
+import '../../components/editor/models/editor_model.dart';
+
 enum Screen { init, editor }
 
 enum DatabaseEngine {
@@ -41,4 +43,17 @@ class EditorCommandResult {
   final bool success;
   final String message;
   final bool shouldPersist;
+}
+
+class EnumColumnSpecsParseResult {
+  const EnumColumnSpecsParseResult.success(this.specs)
+    : success = true,
+      message = '';
+  const EnumColumnSpecsParseResult.failure(this.message)
+    : success = false,
+      specs = const <ColumnInputSpec>[];
+
+  final bool success;
+  final String message;
+  final List<ColumnInputSpec> specs;
 }
