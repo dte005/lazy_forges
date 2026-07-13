@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:nocterm/nocterm.dart';
+
+import '../../model/schema_state.dart';
+import '../../services/clipboard_service.dart';
+import '../../storage/project_storage.dart';
 import './components/sidebar/sidebar_component.dart';
 import './components/table/table_component.dart';
 import './components/vertical_divider/vertical_divider_component.dart';
-import '../../model/schema_state.dart';
-import '../../providers/editor/editor_provider.dart';
-import '../../services/clipboard_service.dart';
-import '../../storage/project_storage.dart';
+import 'providers/editor_provider.dart';
 
 class EditorComponent extends StatefulComponent {
   const EditorComponent({
@@ -76,7 +78,8 @@ class _EditorComponent extends State<EditorComponent> {
   }
 
   Component _buildDbTypesWindow() {
-    final types = _editorProvider.schemaState.getAllowedTypes().toList()..sort();
+    final types = _editorProvider.schemaState.getAllowedTypes().toList()
+      ..sort();
     final rows = <Component>[];
     for (final type in types) {
       rows.add(Text(type));
@@ -95,7 +98,10 @@ class _EditorComponent extends State<EditorComponent> {
             children: [
               const Text(
                 'BD TYPES',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.cyan,
+                ),
               ),
               const Spacer(),
               GestureDetector(
@@ -353,7 +359,10 @@ class _EditorComponent extends State<EditorComponent> {
             children: [
               const Text(
                 'HELP',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.cyan,
+                ),
               ),
               const Spacer(),
               GestureDetector(
@@ -382,6 +391,7 @@ class _EditorComponent extends State<EditorComponent> {
       ),
     );
   }
+
   Component _buildEditorHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -390,10 +400,7 @@ class _EditorComponent extends State<EditorComponent> {
           children: [
             const Text(
               'Lazy',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.cyan,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
             ),
             const Text(
               'Forge',
@@ -425,7 +432,6 @@ class _EditorComponent extends State<EditorComponent> {
     );
   }
 
-
   @override
   Component build(BuildContext context) {
     return Stack(
@@ -433,10 +439,7 @@ class _EditorComponent extends State<EditorComponent> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              flex: 1,
-              child: _buildSidebarPanel(),
-            ),
+            Expanded(flex: 1, child: _buildSidebarPanel()),
             const VerticalDividerComponent(),
             Expanded(
               flex: 4,
@@ -517,7 +520,9 @@ class _EditorComponent extends State<EditorComponent> {
                           '[help]',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: _isHelpOpen ? Colors.brightCyan : Colors.cyan,
+                            color: _isHelpOpen
+                                ? Colors.brightCyan
+                                : Colors.cyan,
                           ),
                         ),
                       ),
@@ -551,11 +556,7 @@ class _EditorComponent extends State<EditorComponent> {
           ],
         ),
         if (_isDbTypesOpen)
-          Positioned(
-            left: 1,
-            bottom: 2,
-            child: _buildDbTypesWindow(),
-          ),
+          Positioned(left: 1, bottom: 2, child: _buildDbTypesWindow()),
       ],
     );
   }
