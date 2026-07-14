@@ -1,143 +1,7 @@
-import '../../model/schema_state.dart';
-import '../../storage/project_storage.dart';
-
-class EditorProvider {
-  EditorProvider({
-    required SchemaState schemaState,
-    required String projectName,
-    required ProjectStorage projectStorage,
-    CommandsProvider? commandsProvider,
-  }) : _schemaState = schemaState,
-       _projectName = projectName,
-       _projectStorage = projectStorage,
-       _commandsProvider = commandsProvider ?? CommandsProvider();
-
-  final SchemaState _schemaState;
-  final String _projectName;
-  final ProjectStorage _projectStorage;
-  final CommandsProvider _commandsProvider;
-  final List<String> _commandHistory = [];
-
-  String _lastFeedback = 'Digite um comando para alterar o schema.';
-  bool _lastCommandFailed = false;
-
-  SchemaState get schemaState => _schemaState;
-  String get lastFeedback => _lastFeedback;
-  bool get lastCommandFailed => _lastCommandFailed;
-  List<String> get commandHistory => List.unmodifiable(_commandHistory);
-
-  void submitCommand(String rawCommand) {
-    final command = rawCommand.trim();
-    if (command.isEmpty) {
-      _lastCommandFailed = true;
-      _lastFeedback = 'Comando vazio. Exemplo: create table users';
-      return;
-    }
-
-    if (command.toLowerCase() == 'history') {
-      _lastCommandFailed = false;
-      if (_commandHistory.isEmpty) {
-        _lastFeedback = 'Ainda não há comandos no histórico.';
-        return;
-      }
-      final start = _commandHistory.length > 15 ? _commandHistory.length - 15 : 0;
-      final items = <String>[];
-      for (var i = start; i < _commandHistory.length; i++) {
-        items.add('${i + 1}. ${_commandHistory[i]}');
-      }
-      _lastFeedback = items.join(' | ');
-      return;
-    }
-
-    _commandHistory.add(command);
-    final parts = _splitChainedCommands(command);
-    if (parts.isEmpty) {
-      _lastCommandFailed = true;
-      _lastFeedback = 'Comando inválido. Use "help" para ver os formatos suportados.';
-      return;
-    }
-
-    final feedbackParts = <String>[];
-    var shouldPersist = false;
-
-    for (final part in parts) {
-      final result = _commandsProvider.handle(
-        part,
-        _schemaState,
-        projectName: _projectName,
-        projectStorage: _projectStorage,
-      );
-
-      feedbackParts.add(result.message);
-
-      if (!result.success) {
-        _lastCommandFailed = true;
-        _lastFeedback = feedbackParts.join(' | ');
-        return;
-      }
-
-      if (result.shouldPersist) {
-        shouldPersist = true;
-      }
-    }
-
-    if (shouldPersist) {
-      try {
-        _projectStorage.saveProject(_projectName, _schemaState);
-      } catch (error) {
-        _lastCommandFailed = true;
-        _lastFeedback = 'Comandos aplicados, mas falhou ao salvar projeto: $error';
-        return;
-      }
-    }
-
-    _lastCommandFailed = false;
-    _lastFeedback = feedbackParts.join(' | ');
-  }
-
-
-  List<String> _splitChainedCommands(String command) {
-    final parts = <String>[];
-    var depth = 0;
-    var start = 0;
-    var i = 0;
-
-    while (i < command.length) {
-      final char = command[i];
-      if (char == '(') {
-        depth += 1;
-        i += 1;
-        continue;
-      }
-      if (char == ')' && depth > 0) {
-        depth -= 1;
-        i += 1;
-        continue;
-      }
-
-      if (depth == 0 &&
-          i + 2 < command.length &&
-          command[i] == ' ' &&
-          command[i + 1] == '-' &&
-          command[i + 2] == ' ') {
-        final chunk = command.substring(start, i).trim();
-        if (chunk.isNotEmpty) {
-          parts.add(chunk);
-        }
-        start = i + 3;
-        i += 3;
-        continue;
-      }
-      i += 1;
-    }
-
-    final tail = command.substring(start).trim();
-    if (tail.isNotEmpty) {
-      parts.add(tail);
-    }
-    return parts;
-  }
-}
+import '../../../services/storage/project_storage.dart';
+import '../../../shared/models/enums.dart';
+import '../models/editor_model.dart';
+import '../models/schema_model.dart';
 
 class CommandsProvider {
   static const String _identifier = r'([a-zA-Z_][a-zA-Z0-9_]*)';
@@ -222,12 +86,16 @@ class CommandsProvider {
     final lower = command.toLowerCase();
 
     if (lower == 'help') {
-      return EditorCommandResult.success(_buildHelpMessage(schemaState.databaseEngine));
+      return EditorCommandResult.success(
+        _buildHelpMessage(schemaState.databaseEngine),
+      );
     }
 
     if (lower == 'show tables') {
       if (schemaState.tables.isEmpty) {
-        return const EditorCommandResult.success('Nenhuma tabela criada ainda.');
+        return const EditorCommandResult.success(
+          'Nenhuma tabela criada ainda.',
+        );
       }
       final names = schemaState.tables.map((t) => t.name).join(', ');
       return EditorCommandResult.success('Tabelas: $names');
@@ -265,7 +133,11 @@ class CommandsProvider {
     if (createTableMatch != null) {
       final tableName = createTableMatch.group(1)!;
       final autoIncrement = createTableMatch.group(2) != null;
-      return _handleCreateTable(tableName, schemaState, autoIncrement: autoIncrement);
+      return _handleCreateTable(
+        tableName,
+        schemaState,
+        autoIncrement: autoIncrement,
+      );
     }
 
     final deleteTableMatch =
@@ -285,19 +157,15 @@ class CommandsProvider {
       if (!optionsResult.success) {
         return EditorCommandResult.failure(optionsResult.message);
       }
-      return _handleAddColumns(
-        tableName,
-        [
-          _ColumnInputSpec(
-            name: columnName,
-            type: type,
-            asPrimaryKey: addColumnShortMatch.group(4) != null,
-            enumOptions: optionsResult.options,
-            description: _cleanDescription(addColumnShortMatch.group(6)),
-          ),
-        ],
-        schemaState,
-      );
+      return _handleAddColumns(tableName, [
+        ColumnInputSpec(
+          name: columnName,
+          type: type,
+          asPrimaryKey: addColumnShortMatch.group(4) != null,
+          enumOptions: optionsResult.options,
+          description: _cleanDescription(addColumnShortMatch.group(6)),
+        ),
+      ], schemaState);
     }
 
     final addColumnVerboseMatch = _addColumnVerbosePattern.firstMatch(command);
@@ -309,19 +177,15 @@ class CommandsProvider {
       if (!optionsResult.success) {
         return EditorCommandResult.failure(optionsResult.message);
       }
-      return _handleAddColumns(
-        tableName,
-        [
-          _ColumnInputSpec(
-            name: columnName,
-            type: type,
-            asPrimaryKey: addColumnVerboseMatch.group(4) != null,
-            enumOptions: optionsResult.options,
-            description: _cleanDescription(addColumnVerboseMatch.group(6)),
-          ),
-        ],
-        schemaState,
-      );
+      return _handleAddColumns(tableName, [
+        ColumnInputSpec(
+          name: columnName,
+          type: type,
+          asPrimaryKey: addColumnVerboseMatch.group(4) != null,
+          enumOptions: optionsResult.options,
+          description: _cleanDescription(addColumnVerboseMatch.group(6)),
+        ),
+      ], schemaState);
     }
 
     final addColumnsMatch = _addColumnsPattern.firstMatch(command);
@@ -433,7 +297,10 @@ class CommandsProvider {
     );
   }
 
-  EditorCommandResult _handleDeleteTable(String tableName, SchemaState schemaState) {
+  EditorCommandResult _handleDeleteTable(
+    String tableName,
+    SchemaState schemaState,
+  ) {
     final deleted = schemaState.deleteTable(tableName);
     if (!deleted) {
       return EditorCommandResult.failure('Tabela "$tableName" não encontrada.');
@@ -450,13 +317,18 @@ class CommandsProvider {
       DatabaseEngine.mysql => 'int',
       DatabaseEngine.sqlite => 'integer',
     };
-    schemaState.addColumn(tableName, 'id', idType, description: 'auto increment');
+    schemaState.addColumn(
+      tableName,
+      'id',
+      idType,
+      description: 'auto increment',
+    );
     schemaState.setPrimaryKey(tableName, 'id');
   }
 
   EditorCommandResult _handleAddColumns(
     String tableName,
-    List<_ColumnInputSpec> specs,
+    List<ColumnInputSpec> specs,
     SchemaState schemaState,
   ) {
     final table = schemaState.findTableByName(tableName);
@@ -464,13 +336,16 @@ class CommandsProvider {
       return EditorCommandResult.failure('Tabela "$tableName" não encontrada.');
     }
 
-    final existingNames = table.columns.map((c) => c.name.toLowerCase()).toSet();
+    final existingNames = table.columns
+        .map((c) => c.name.toLowerCase())
+        .toSet();
     final batchNames = <String>{};
     final added = <String>[];
 
     for (final spec in specs) {
       final normalizedName = spec.name.toLowerCase();
-      if (existingNames.contains(normalizedName) || batchNames.contains(normalizedName)) {
+      if (existingNames.contains(normalizedName) ||
+          batchNames.contains(normalizedName)) {
         return EditorCommandResult.failure(
           'A coluna "${spec.name}" já existe em "$tableName".',
         );
@@ -572,7 +447,10 @@ class CommandsProvider {
       );
     }
 
-    final targetColumn = schemaState.findColumnByName(targetTable, referenceColumnName);
+    final targetColumn = schemaState.findColumnByName(
+      targetTable,
+      referenceColumnName,
+    );
     if (targetColumn == null) {
       return EditorCommandResult.failure(
         'Coluna de referência "$referenceColumnName" não encontrada em "$referenceTableName".',
@@ -588,11 +466,15 @@ class CommandsProvider {
     final alreadyExists = sourceTable.foreignKeys.any(
       (fk) =>
           fk.columnName.toLowerCase() == sourceColumn.name.toLowerCase() &&
-          fk.referenceTableName.toLowerCase() == targetTable.name.toLowerCase() &&
-          fk.referenceColumnName.toLowerCase() == targetColumn.name.toLowerCase(),
+          fk.referenceTableName.toLowerCase() ==
+              targetTable.name.toLowerCase() &&
+          fk.referenceColumnName.toLowerCase() ==
+              targetColumn.name.toLowerCase(),
     );
     if (alreadyExists) {
-      return const EditorCommandResult.failure('FK já existe para essa coluna.');
+      return const EditorCommandResult.failure(
+        'FK já existe para essa coluna.',
+      );
     }
 
     schemaState.addForeignKey(
@@ -607,7 +489,10 @@ class CommandsProvider {
     );
   }
 
-  EditorCommandResult _handleSetDatabase(String database, SchemaState schemaState) {
+  EditorCommandResult _handleSetDatabase(
+    String database,
+    SchemaState schemaState,
+  ) {
     switch (database) {
       case 'postgres':
         schemaState.setDatabaseEngine(DatabaseEngine.postgres);
@@ -731,30 +616,30 @@ class CommandsProvider {
     );
   }
 
-  _ColumnSpecsParseResult _parseColumnSpecs(String payload) {
+  EnumColumnSpecsParseResult _parseColumnSpecs(String payload) {
     final chunks = _splitSpecs(payload);
     if (chunks.isEmpty) {
-      return const _ColumnSpecsParseResult.failure(
+      return const EnumColumnSpecsParseResult.failure(
         'Nenhuma coluna detectada. Exemplo: add columns <table> id int; name varchar(255)',
       );
     }
 
-    final specs = <_ColumnInputSpec>[];
+    final specs = <ColumnInputSpec>[];
     for (final chunk in chunks) {
       final match = _columnSpecPattern.firstMatch(chunk);
       if (match == null) {
-        return _ColumnSpecsParseResult.failure(
+        return EnumColumnSpecsParseResult.failure(
           'Formato inválido de coluna: "$chunk". Use "<coluna> <tipo> [as pk] [options(...)] [description(...)]".',
         );
       }
 
       final optionsResult = _parseEnumOptions(match.group(4));
       if (!optionsResult.success) {
-        return _ColumnSpecsParseResult.failure(optionsResult.message);
+        return EnumColumnSpecsParseResult.failure(optionsResult.message);
       }
 
       specs.add(
-        _ColumnInputSpec(
+        ColumnInputSpec(
           name: match.group(1)!.trim(),
           type: match.group(2)!.trim(),
           asPrimaryKey: match.group(3) != null,
@@ -764,7 +649,7 @@ class CommandsProvider {
       );
     }
 
-    return _ColumnSpecsParseResult.success(specs);
+    return EnumColumnSpecsParseResult.success(specs);
   }
 
   List<String> _splitSpecs(String payload) {
@@ -794,9 +679,9 @@ class CommandsProvider {
     return specs;
   }
 
-  _EnumOptionsParseResult _parseEnumOptions(String? raw) {
+  EnumOptionsParseResult _parseEnumOptions(String? raw) {
     if (raw == null) {
-      return const _EnumOptionsParseResult.success(<String>[]);
+      return const EnumOptionsParseResult.success(<String>[]);
     }
 
     final values = raw
@@ -805,7 +690,7 @@ class CommandsProvider {
         .where((value) => value.isNotEmpty)
         .toList();
     if (values.isEmpty) {
-      return const _EnumOptionsParseResult.failure(
+      return const EnumOptionsParseResult.failure(
         'options(...) precisa ter ao menos um valor.',
       );
     }
@@ -813,12 +698,12 @@ class CommandsProvider {
     final dedup = <String>{};
     for (final value in values) {
       if (!dedup.add(value.toLowerCase())) {
-        return _EnumOptionsParseResult.failure(
+        return EnumOptionsParseResult.failure(
           'Valor enum duplicado em options(...): "$value".',
         );
       }
     }
-    return _EnumOptionsParseResult.success(values);
+    return EnumOptionsParseResult.success(values);
   }
 
   String? _cleanDescription(String? value) {
@@ -850,7 +735,7 @@ class CommandsProvider {
         'add columns <table> <col1 type [as pk] ...; col2 type ...> | '
         'add column <column> type <type> to <table> [as pk] [options(v1|v2)] [description(text)] | '
         'set pk <table> <column> | '
-        'add fk <table> <column> references <ref_table> <ref_column> | '
+        'add fk <table> <column> references <ref_table> <refColumn> | '
         'set database <postgres|mysql|sqlite> | show database | show types | show tables | '
         'rename table <old> to <new> | '
         'change table <old> to <new> | '
@@ -860,58 +745,4 @@ class CommandsProvider {
         'change column <table> <column> type <new_type> [options(v1|v2)] | '
         'export [nome_arquivo.sql] | history';
   }
-}
-
-class _ColumnInputSpec {
-  const _ColumnInputSpec({
-    required this.name,
-    required this.type,
-    this.asPrimaryKey = false,
-    this.enumOptions = const <String>[],
-    this.description,
-  });
-
-  final String name;
-  final String type;
-  final bool asPrimaryKey;
-  final List<String> enumOptions;
-  final String? description;
-}
-
-class _ColumnSpecsParseResult {
-  const _ColumnSpecsParseResult.success(this.specs)
-    : success = true,
-      message = '';
-  const _ColumnSpecsParseResult.failure(this.message)
-    : success = false,
-      specs = const <_ColumnInputSpec>[];
-
-  final bool success;
-  final String message;
-  final List<_ColumnInputSpec> specs;
-}
-
-class _EnumOptionsParseResult {
-  const _EnumOptionsParseResult.success(this.options)
-    : success = true,
-      message = '';
-  const _EnumOptionsParseResult.failure(this.message)
-    : success = false,
-      options = const <String>[];
-
-  final bool success;
-  final String message;
-  final List<String> options;
-}
-
-class EditorCommandResult {
-  const EditorCommandResult.success(this.message, {this.shouldPersist = false})
-    : success = true;
-  const EditorCommandResult.failure(this.message)
-    : success = false,
-      shouldPersist = false;
-
-  final bool success;
-  final String message;
-  final bool shouldPersist;
 }
