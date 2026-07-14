@@ -60,6 +60,7 @@ class _InitComponent extends State<InitComponent> {
     super.dispose();
   }
 
+  // TODO check about create a provider
   void _reloadProjects() {
     setState(() {
       _projects = component.projectStorage.listProjects();
