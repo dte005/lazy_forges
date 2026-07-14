@@ -1,5 +1,6 @@
 import 'package:nocterm/nocterm.dart';
 
+import '../../models/graph_model.dart';
 import '../../models/schema_model.dart';
 import './graph_layout.dart';
 

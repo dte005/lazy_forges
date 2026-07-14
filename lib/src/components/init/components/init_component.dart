@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:nocterm/nocterm.dart';
 
 import '../../../services/storage/models/project_model.dart';
@@ -193,7 +191,7 @@ class _InitComponent extends State<InitComponent> {
 
     if (_isCreating) return false;
     if (event.logicalKey == LogicalKey.escape) {
-      exit(0);
+      shutdownApp();
     }
 
     if (event.logicalKey == LogicalKey.arrowDown) {

@@ -416,7 +416,7 @@ class _EditorComponent extends State<EditorComponent> {
             ),
             const Spacer(),
             GestureDetector(
-              onTap: () => exit(0),
+              onTap: () => shutdownApp(),
               child: const Text(
                 'sair',
                 style: TextStyle(
