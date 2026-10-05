@@ -33,7 +33,7 @@ Preencha as seções acima da linha "Diretivas para o agente" de forma autossufi
 ## Garantia de comportamento
 - [ ] Nenhum comando, mensagem ou formato de arquivo muda para o usuário
 - [ ] Projetos já salvos em `lazyforge_projects/` continuam abrindo normalmente
-- [ ] A estrutura continua conforme a constituição (`lib/src/{components,providers,model,storage,services}`)
+- [ ] A organização de pastas resultante é coerente com a constituição e o `AGENTS.md` (ou a emenda necessária foi proposta)
 
 ## Critérios de aceite
 <!-- Verificáveis. Ex.: a classe X fica em arquivo próprio; nenhum arquivo passa de N linhas. -->
@@ -74,10 +74,12 @@ Esta issue é o ponto de partida. A versão alvo é a do **milestone** desta iss
 **3. Restrições obrigatórias**
 - Zero mudança de comportamento: mesmos comandos, mensagens, saídas de DDL e formato JSON.
 - Não alterar `specs/001-*` nem `specs/002-*`.
-- Estrutura: `lib/src/{components,providers,model,storage,services}`; parsing de comandos fora de
-  `components/`; usar `ColumnDef`, nunca `Column`; sem `index.dart`.
-- Se a reorganização exigir mudar a estrutura de pastas prevista na constituição, **pare** e proponha a
+- Estrutura: parte da organização real de `lib/src/`; parsing de comandos fora dos componentes de UI;
+  usar `ColumnDef`, nunca `Column`; sem `index.dart`. Se a constituição ou o `AGENTS.md` divergirem do
+  código, vale o código: avise o mantenedor.
+- Se a reorganização exigir mudar a estrutura de pastas descrita na constituição, **pare** e proponha a
   emenda ao mantenedor (`/speckit-constitution`) antes de continuar.
+- Para encerrar o app, usar `shutdownApp()` do nocterm, nunca `exit(0)`.
 - Confirmar a API do `nocterm` no código instalado antes de usá-la.
 - Não adicionar dependência ao `pubspec.yaml` sem perguntar ao mantenedor.
 - Não criar nem expandir testes automatizados (a constituição não os exige).
