@@ -1,5 +1,6 @@
 import 'package:nocterm/nocterm.dart';
-import '../../../../../model/schema_state.dart';
+
+import '../../../models/schema_model.dart';
 
 class TableBoxComponent extends StatelessComponent {
   const TableBoxComponent({super.key, required this.table});
@@ -28,7 +29,8 @@ class TableBoxComponent extends StatelessComponent {
       rows.add(const Text('  (sem colunas)'));
     } else {
       for (final column in table.columns) {
-        final fkRefs = foreignKeysByColumn[column.name.toLowerCase()] ?? const [];
+        final fkRefs =
+            foreignKeysByColumn[column.name.toLowerCase()] ?? const [];
         final tags = <String>[];
         if (column.isPrimaryKey) {
           tags.add('PK');

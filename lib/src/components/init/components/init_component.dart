@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:nocterm/nocterm.dart';
 
-import '../../model/schema_state.dart';
-import '../../storage/project_storage.dart';
+import '../../../services/storage/models/project_model.dart';
+import '../../../services/storage/project_storage.dart';
+import '../../../shared/models/enums.dart';
 
 class InitComponent extends StatefulComponent {
   const InitComponent({
@@ -58,6 +58,7 @@ class _InitComponent extends State<InitComponent> {
     super.dispose();
   }
 
+  // TODO check about create a provider
   void _reloadProjects() {
     setState(() {
       _projects = component.projectStorage.listProjects();
@@ -159,7 +160,8 @@ class _InitComponent extends State<InitComponent> {
       if (event.logicalKey == LogicalKey.arrowUp ||
           event.logicalKey == LogicalKey.arrowLeft) {
         setState(() {
-          _selectedEngine = (_selectedEngine - 1 + _engines.length) % _engines.length;
+          _selectedEngine =
+              (_selectedEngine - 1 + _engines.length) % _engines.length;
         });
         return true;
       }
@@ -189,7 +191,7 @@ class _InitComponent extends State<InitComponent> {
 
     if (_isCreating) return false;
     if (event.logicalKey == LogicalKey.escape) {
-      exit(0);
+      shutdownApp();
     }
 
     if (event.logicalKey == LogicalKey.arrowDown) {
@@ -204,7 +206,8 @@ class _InitComponent extends State<InitComponent> {
     if (event.logicalKey == LogicalKey.arrowUp) {
       if (_projects.isNotEmpty) {
         setState(() {
-          _selectedProject = (_selectedProject - 1 + _projects.length) % _projects.length;
+          _selectedProject =
+              (_selectedProject - 1 + _projects.length) % _projects.length;
         });
       }
       return true;
@@ -245,7 +248,9 @@ class _InitComponent extends State<InitComponent> {
     for (var i = 0; i < _projects.length; i++) {
       final project = _projects[i];
       final prefix = i == _selectedProject ? '> ' : '  ';
-      items.add(Text('$prefix${project.name} [${project.databaseEngine.name}]'));
+      items.add(
+        Text('$prefix${project.name} [${project.databaseEngine.name}]'),
+      );
     }
     return items;
   }
@@ -363,7 +368,9 @@ class _InitComponent extends State<InitComponent> {
         const Divider(style: DividerStyle.single),
         ..._buildProjectList(),
         const Divider(style: DividerStyle.single),
-        const Text('↑/↓: selecionar | Enter: abrir | N: novo projeto | R: recarregar'),
+        const Text(
+          '↑/↓: selecionar | Enter: abrir | N: novo projeto | R: recarregar',
+        ),
       ],
     );
   }
@@ -395,11 +402,7 @@ class _InitComponent extends State<InitComponent> {
             ),
           ),
           if (_isPickingDatabase)
-            Positioned(
-              left: 8,
-              top: 14,
-              child: _buildDatabasePickerWindow(),
-            ),
+            Positioned(left: 8, top: 14, child: _buildDatabasePickerWindow()),
         ],
       ),
     );

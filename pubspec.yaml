@@ -2,7 +2,7 @@ name: lazy_forge
 executables:
   lazy_forge: lazy_forge
 description: IDE de terminal (TUI) em Dart para modelagem de schema com comandos, visualização em tempo real e export SQL.
-version: 1.0.0
+version: 1.0.1
 repository: https://github.com/dte005/lazy_forges
 homepage: https://dte005.github.io/lazy_forges/#database-types
 issue_tracker: https://github.com/dte005/lazy_forges/issues

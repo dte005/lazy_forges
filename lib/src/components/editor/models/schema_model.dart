@@ -1,18 +1,4 @@
-enum DatabaseEngine { postgres, mysql, sqlite }
-
-DatabaseEngine databaseEngineFromString(String? value) {
-  final normalized = value?.trim().toLowerCase();
-  switch (normalized) {
-    case 'postgres':
-      return DatabaseEngine.postgres;
-    case 'mysql':
-      return DatabaseEngine.mysql;
-    case 'sqlite':
-      return DatabaseEngine.sqlite;
-    default:
-      return DatabaseEngine.postgres;
-  }
-}
+import '../../../shared/models/enums.dart';
 
 class ColumnDef {
   String name;
@@ -158,7 +144,9 @@ class SchemaState {
 
   factory SchemaState.fromJson(Map<String, dynamic> json) {
     final state = SchemaState();
-    state.databaseEngine = databaseEngineFromString(json['databaseEngine'] as String?);
+    state.databaseEngine = DatabaseEngine.fromString(
+      json['databaseEngine'] as String,
+    );
 
     final rawTables = json['tables'];
     if (rawTables is List) {
@@ -208,7 +196,8 @@ class SchemaState {
     tables.remove(target);
     for (final table in tables) {
       table.foreignKeys.removeWhere(
-        (fk) => fk.referenceTableName.toLowerCase() == target.name.toLowerCase(),
+        (fk) =>
+            fk.referenceTableName.toLowerCase() == target.name.toLowerCase(),
       );
     }
     return true;
@@ -367,7 +356,8 @@ class SchemaState {
       final items = <String>[];
 
       for (final column in table.columns) {
-        if (column.description != null && column.description!.trim().isNotEmpty) {
+        if (column.description != null &&
+            column.description!.trim().isNotEmpty) {
           items.add('  -- ${column.name}: ${column.description!.trim()}');
         }
         items.add('  ${_buildColumnSql(column)}');
@@ -453,7 +443,9 @@ class TableDef {
         if (raw is Map<String, dynamic>) {
           parsedForeignKeys.add(ForeignKeyDef.fromJson(raw));
         } else if (raw is Map) {
-          parsedForeignKeys.add(ForeignKeyDef.fromJson(raw.cast<String, dynamic>()));
+          parsedForeignKeys.add(
+            ForeignKeyDef.fromJson(raw.cast<String, dynamic>()),
+          );
         }
       }
     }

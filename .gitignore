@@ -8,3 +8,4 @@ lazyforge_projects/
 # https://dart.dev/guides/libraries/private-files#pubspeclock.
 pubspec.lock
 test/*
+.idea/

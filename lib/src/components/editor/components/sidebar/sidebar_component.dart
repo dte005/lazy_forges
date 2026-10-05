@@ -1,5 +1,6 @@
 import 'package:nocterm/nocterm.dart';
-import '../../../../model/schema_state.dart';
+
+import '../../models/schema_model.dart';
 
 class SidebarComponent extends StatelessComponent {
   const SidebarComponent({super.key, required this.schemas});
@@ -52,7 +53,8 @@ class SidebarComponent extends StatelessComponent {
           final enumText = column.enumOptions.isEmpty
               ? ''
               : ' {${column.enumOptions.join('|')}}';
-          final descriptionText = (column.description == null || column.description!.isEmpty)
+          final descriptionText =
+              (column.description == null || column.description!.isEmpty)
               ? ''
               : ' -- ${column.description}';
           nodeChildren.add(
@@ -63,7 +65,7 @@ class SidebarComponent extends StatelessComponent {
 
           final references =
               foreignKeysByColumn[column.name.toLowerCase()] ??
-                  const <ForeignKeyDef>[];
+              const <ForeignKeyDef>[];
           for (final fk in references) {
             nodeChildren.add(
               Text(

@@ -1,13 +1,14 @@
 import 'package:lazy_forge/src/components/editor/editor_component.dart';
-import 'package:lazy_forge/src/components/init/init_component.dart';
+import 'package:lazy_forge/src/components/init/components/init_component.dart';
+import 'package:lazy_forge/src/services/storage/models/project_model.dart';
+import 'package:lazy_forge/src/services/storage/project_storage.dart';
 import 'package:nocterm/nocterm.dart';
-import './model/enums.dart';
-import './storage/project_storage.dart';
+
+import './shared/models/enums.dart';
 
 class LazyForgeApp extends StatefulComponent {
   const LazyForgeApp({super.key});
   @override
-
   State<LazyForgeApp> createState() => _LazyForgeApp();
 }
 
