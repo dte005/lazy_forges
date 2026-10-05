@@ -18,8 +18,14 @@ visualização em grafo atualizada a cada comando. Inspirada em LazyGit e LazyVi
 
 ## Estado do projeto
 
-A **v0.1 (baseline) está em produção** (`pubspec.yaml` em 1.0.0). O código
-existente é a fonte da verdade.
+A **baseline (rótulo interno "v0.1") está em produção**, hoje publicada como
+**1.0.1** (`pubspec.yaml`). A versão oficial de cada entrega é a do **milestone**
+da issue no GitHub; `pubspec.yaml` e `CHANGELOG.md` devem seguir essa versão (pergunte
+ao mantenedor antes de alterá-los). O código existente é a fonte da verdade.
+
+O backlog de melhorias vive em **issues do GitHub** (`dte005/lazy_forges`). Cada issue
+segue um template em `.github/ISSUE_TEMPLATE/` com diretivas para o agente; ao receber
+`#N` ou uma URL, leia a issue com `gh issue view N` e siga o fluxo Spec Kit descrito nela.
 
 - Não reescreva, reorganize nem "corrija" código liberado sem uma spec nova que
   justifique a mudança.
@@ -37,15 +43,27 @@ bin/lazy_forge.dart            # entry point
 lib/lazy_forge.dart            # barrel público
 lib/src/
 ├── main.dart
-├── components/                # UI (editor/, init/)
-├── providers/editor/          # estado do editor e parsing dos comandos
-├── model/                     # SchemaState, TableDef, ColumnDef, enums
-├── storage/                   # persistência de projetos e export do DDL
-└── services/                  # utilitários (ex.: clipboard)
+├── components/
+│   ├── init/components/init_component.dart   # criar/abrir projeto
+│   └── editor/
+│       ├── editor_component.dart             # tela do editor, atalhos, Help
+│       ├── components/                       # sidebar/, table/ (grafo), vertical_divider/
+│       ├── models/                           # schema_model.dart (SchemaState, TableDef,
+│       │                                     # ColumnDef, DDL), editor_model, graph_model
+│       └── providers/                        # commands_provider.dart (parsing e handlers),
+│                                             # editor_provider.dart (histórico, encadeamento)
+├── services/
+│   ├── clipboard_service.dart
+│   └── storage/                              # project_storage.dart (projetos JSON e export
+│                                             # do DDL) e models/project_model.dart
+└── shared/models/enums.dart                  # DatabaseEngine e afins
 specs/                         # specs do Spec Kit
+.github/ISSUE_TEMPLATE/        # templates de issue (feature, bug, refactor)
 ```
 
-Esta estrutura é a mesma da constituição (v1.2.0). Não mova arquivos sem spec.
+Esta estrutura foi reorganizada depois da constituição v1.2.0, que ainda cita
+`providers/`, `model/` e `storage/` na raiz de `lib/src/`. **Vale o código.** Não mova
+arquivos sem spec; a constituição deve ser emendada em seguida.
 
 ## Regras de código
 
@@ -54,13 +72,15 @@ Esta estrutura é a mesma da constituição (v1.2.0). Não mova arquivos sem spe
 - Use **`ColumnDef`**, nunca `Column` para o modelo de coluna (colide com o widget
   do `nocterm`).
 - Parsing de comandos não vai dentro de componentes de UI; fica em
-  `lib/src/providers/`.
+  `lib/src/components/editor/providers/commands_provider.dart`.
+- Para encerrar o app use `shutdownApp()` do `nocterm`, nunca `exit(0)` (causava
+  corrupção do terminal no Mac).
 - Simplicidade: sem abstrações "para o futuro", sem gambiarras.
 - **Nunca presuma a API do `nocterm`.** Confirme no código-fonte instalado
   localmente (cache do pub) antes de usar.
 - **Pergunte antes de adicionar dependência** ao `pubspec.yaml`.
-- Explique o motivo da escolha de arquitetura antes de alterar
-  `lib/src/model/` ou `lib/src/components/`.
+- Explique o motivo da escolha de arquitetura antes de alterar modelos
+  (`.../models/`) ou componentes (`lib/src/components/`).
 
 ## Produto e UX
 
@@ -72,9 +92,9 @@ Esta estrutura é a mesma da constituição (v1.2.0). Não mova arquivos sem spe
   gruvbox é só preferência. Mantenha o mesmo tema em todas as telas.
 - Performance é requisito: nada que trave a interface, mesmo com schemas grandes.
 - Teclado é o modo primário. Funcionalidade nova ou tela nova deve oferecer a
-  tecla `q` para sair (sem depender só de `Ctrl+C`). A v0.1 não tem `q` (sai por
+  tecla `q` para sair (sem depender só de `Ctrl+C`). A baseline não tem `q` (sai por
   `Esc` na tela inicial e por clique em "sair" no editor); isso é lacuna
-  conhecida, a tratar em spec própria.
+  conhecida, tratada em issue própria.
 - Interações por clique já existentes (sair, fechar/copiar no Help) não devem
   ser removidas sem spec.
 
