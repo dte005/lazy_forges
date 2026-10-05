@@ -31,6 +31,7 @@ LazyForge é uma IDE de terminal (TUI) para modelagem de schema SQL com fluxo ke
 
 ```bash
 dart pub global activate lazy_forge
+# to execute
 lazy_forge
 ```
 
