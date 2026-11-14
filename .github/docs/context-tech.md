@@ -65,46 +65,6 @@ Esta estrutura foi reorganizada depois da constituição v1.2.0, que ainda cita
 `providers/`, `model/` e `storage/` na raiz de `lib/src/`. **Vale o código.** Não mova
 arquivos sem spec; a constituição deve ser emendada em seguida.
 
-## Regras de código
-
-- Dart idiomático: `lib/` público, `lib/src/` privado, arquivos em `snake_case`,
-  classes em `PascalCase`. Nunca crie `index.dart`.
-- Use **`ColumnDef`**, nunca `Column` para o modelo de coluna (colide com o widget
-  do `nocterm`).
-- Parsing de comandos não vai dentro de componentes de UI; fica em
-  `lib/src/components/editor/providers/commands_provider.dart`.
-- Para encerrar o app use `shutdownApp()` do `nocterm`, nunca `exit(0)` (causava
-  corrupção do terminal no Mac).
-- Simplicidade: sem abstrações "para o futuro", sem gambiarras.
-- **Nunca presuma a API do `nocterm`.** Confirme no código-fonte instalado
-  localmente (cache do pub) antes de usar.
-- **Pergunte antes de adicionar dependência** ao `pubspec.yaml`.
-- Explique o motivo da escolha de arquitetura antes de alterar modelos
-  (`.../models/`) ou componentes (`lib/src/components/`).
-
-## Produto e UX
-
-- Toda funcionalidade deve resolver um problema concreto de usabilidade. Nada
-  vago ou especulativo.
-- Comandos previsíveis, com mensagens de erro claras e acionáveis; nunca expor
-  stack trace ao usuário.
-- Clareza acima de estética. A v0.1 usa o tema `dark` nativo do `nocterm`;
-  gruvbox é só preferência. Mantenha o mesmo tema em todas as telas.
-- Performance é requisito: nada que trave a interface, mesmo com schemas grandes.
-- Teclado é o modo primário. Funcionalidade nova ou tela nova deve oferecer a
-  tecla `q` para sair (sem depender só de `Ctrl+C`). A baseline não tem `q` (sai por
-  `Esc` na tela inicial e por clique em "sair" no editor); isso é lacuna
-  conhecida, tratada em issue própria.
-- Interações por clique já existentes (sair, fechar/copiar no Help) não devem
-  ser removidas sem spec.
-
-## Testes
-
-Este projeto **não exige testes automatizados** (decisão da constituição). O
-`test/` existente não deve ser expandido e não devem ser adicionadas novas
-dependências de teste sem aprovação explícita. Valide por revisão e execução
-manual.
-
 ## Desenvolvimento
 
 ```bash

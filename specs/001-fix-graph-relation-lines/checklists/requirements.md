@@ -1,7 +1,7 @@
-# Specification Quality Checklist: Modelagem de Schema de Banco via TUI (LazyForge)
+# Specification Quality Checklist: Corrigir linhas de relacionamento transpassando tabelas no grafo
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-10-03
+**Created**: 2026-10-08
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,5 +31,12 @@
 
 ## Notes
 
-- Itens pendentes requerem atualização do spec antes de `/speckit-clarify` ou `/speckit-plan`.
-- 3 marcadores `[NEEDS CLARIFICATION]` permanecem em FR-013, FR-014 e FR-015 (dentro do limite máximo de 3). Perguntas apresentadas ao usuário para resolução — ver mensagem de conclusão.
+- A spec inclui uma seção "Causa Raiz Confirmada no Código", fora do template
+  padrão, por exigência explícita do pedido de especificação (confirmar as
+  hipóteses de causa raiz da issue antes de declarar o comportamento
+  esperado). Essa seção cita nomes de arquivo e de variáveis do código como
+  evidência da causa raiz, não como decisão de implementação — a técnica de
+  correção (algoritmo de roteamento) permanece em aberto para o
+  `/speckit-plan`.
+- Todos os itens do checklist passaram na primeira validação; nenhuma
+  iteração de correção foi necessária.

@@ -3,30 +3,7 @@ import 'package:nocterm/nocterm.dart';
 import '../../models/graph_model.dart';
 import '../../models/schema_model.dart';
 import './graph_layout.dart';
-
-class _TableNodeLayout {
-  const _TableNodeLayout({
-    required this.table,
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    required this.columnYByName,
-  });
-
-  final TableDef table;
-  final int x;
-  final int y;
-  final int width;
-  final int height;
-  final Map<String, int> columnYByName;
-
-  int get centerX => x + (width ~/ 2);
-
-  int columnAnchorY(String columnName) {
-    return columnYByName[columnName.toLowerCase()] ?? (y + 1);
-  }
-}
+import './graph_routing.dart';
 
 class TableGraphLayoutComponent extends StatelessComponent {
   const TableGraphLayoutComponent({super.key, required this.schemaState});
@@ -77,53 +54,24 @@ class TableGraphLayoutComponent extends StatelessComponent {
       columnColorByKey.putIfAbsent(targetKey, () => color);
     }
 
-    const rowGap = 3;
-    const colGap = 8;
     const marginX = 2;
     const marginY = 1;
 
-    final rowWidths = <int>[];
-    final rowHeights = <int>[];
-    for (final row in layout.rows) {
-      var width = 0;
-      var rowHeight = 0;
-      for (var i = 0; i < row.length; i++) {
-        final spec = tableSpecs[row[i].name.toLowerCase()]!;
-        width += spec.width;
-        if (i > 0) width += colGap;
-        if (spec.height > rowHeight) rowHeight = spec.height;
-      }
-      rowWidths.add(width);
-      rowHeights.add(rowHeight);
+    final tableSizes = <String, ({int width, int height})>{};
+    for (final entry in tableSpecs.entries) {
+      tableSizes[entry.key] = (
+        width: entry.value.width,
+        height: entry.value.height,
+      );
     }
 
-    var maxRowWidth = 0;
-    for (final width in rowWidths) {
-      if (width > maxRowWidth) maxRowWidth = width;
-    }
-
-    final nodesByName = <String, _TableNodeLayout>{};
-    var cursorY = marginY;
-    for (var rowIndex = 0; rowIndex < layout.rows.length; rowIndex++) {
-      final row = layout.rows[rowIndex];
-      final rowWidth = rowWidths[rowIndex];
-      var cursorX = marginX + ((maxRowWidth - rowWidth) ~/ 2);
-
-      for (final table in row) {
-        final spec = tableSpecs[table.name.toLowerCase()]!;
-        nodesByName[table.name.toLowerCase()] = _TableNodeLayout(
-          table: table,
-          x: cursorX,
-          y: cursorY,
-          width: spec.width,
-          height: spec.height,
-          columnYByName: <String, int>{},
-        );
-        cursorX += spec.width + colGap;
-      }
-
-      cursorY += rowHeights[rowIndex] + rowGap;
-    }
+    final routingPlan = const GraphRoutingEngine().plan(
+      layout: layout,
+      tableSizes: tableSizes,
+      marginX: marginX,
+      marginY: marginY,
+    );
+    final nodesByName = routingPlan.tablePositions;
 
     var minX = 0;
     var minY = 0;
@@ -132,36 +80,21 @@ class TableGraphLayoutComponent extends StatelessComponent {
     for (final node in nodesByName.values) {
       if (node.x < minX) minX = node.x;
       if (node.y < minY) minY = node.y;
-      if (node.x + node.width > maxX) maxX = node.x + node.width;
-      if (node.y + node.height > maxY) maxY = node.y + node.height;
+      if (node.right > maxX) maxX = node.right;
+      if (node.bottom > maxY) maxY = node.bottom;
     }
 
-    for (final edge in layout.edges) {
-      final source = nodesByName[edge.sourceTable.toLowerCase()];
-      final target = nodesByName[edge.targetTable.toLowerCase()];
-      if (source == null || target == null) continue;
-
-      final sourceToRight = target.centerX >= source.centerX;
-      final sourceOutX = sourceToRight
-          ? (source.x + source.width)
-          : (source.x - 1);
-      final targetInX = sourceToRight
-          ? (target.x - 1)
-          : (target.x + target.width);
-      var midX = (sourceOutX + targetInX) ~/ 2;
-
-      if (sourceToRight && targetInX <= sourceOutX) {
-        midX = sourceOutX + 2;
-      } else if (!sourceToRight && targetInX >= sourceOutX) {
-        midX = sourceOutX - 2;
+    for (final routed in routingPlan.routedEdges) {
+      for (final segment in routed.segments) {
+        if (segment.x1 < minX) minX = segment.x1;
+        if (segment.x2 < minX) minX = segment.x2;
+        if (segment.y1 < minY) minY = segment.y1;
+        if (segment.y2 < minY) minY = segment.y2;
+        if (segment.x1 > maxX) maxX = segment.x1;
+        if (segment.x2 > maxX) maxX = segment.x2;
+        if (segment.y1 > maxY) maxY = segment.y1;
+        if (segment.y2 > maxY) maxY = segment.y2;
       }
-
-      if (sourceOutX < minX) minX = sourceOutX;
-      if (targetInX < minX) minX = targetInX;
-      if (midX < minX) minX = midX;
-      if (sourceOutX > maxX) maxX = sourceOutX;
-      if (targetInX > maxX) maxX = targetInX;
-      if (midX > maxX) maxX = midX;
     }
 
     final offsetX = (minX < 0) ? (-minX + 1) : 0;
@@ -191,7 +124,11 @@ class TableGraphLayoutComponent extends StatelessComponent {
         return;
       }
 
-      if (current == ' ' || char == '>' || char == '<') {
+      if (current == ' ' ||
+          char == '>' ||
+          char == '<' ||
+          char == '^' ||
+          char == 'v') {
         canvas[cy][cx] = char;
         if (color != null) {
           colorCanvas[cy][cx] = color;
@@ -259,8 +196,14 @@ class TableGraphLayoutComponent extends StatelessComponent {
       return '${value.substring(0, width - 3)}...';
     }
 
+    final tableByKey = <String, TableDef>{};
+    for (final table in schemaState.tables) {
+      tableByKey[table.name.toLowerCase()] = table;
+    }
+
     for (final entry in nodesByName.entries) {
       final node = entry.value;
+      final table = tableByKey[entry.key]!;
       final innerWidth = node.width - 2;
       final boxTop = node.y;
       final boxBottom = node.y + node.height - 1;
@@ -279,7 +222,7 @@ class TableGraphLayoutComponent extends StatelessComponent {
         drawAt(node.x + node.width - 1, y, '|');
       }
 
-      final title = fit(node.table.name, innerWidth);
+      final title = fit(table.name, innerWidth);
       drawText(node.x + 1, node.y + 1, title);
 
       final sepY = node.y + 2;
@@ -290,17 +233,16 @@ class TableGraphLayoutComponent extends StatelessComponent {
       }
 
       final foreignKeysByColumn = <String, List<ForeignKeyDef>>{};
-      for (final fk in node.table.foreignKeys) {
+      for (final fk in table.foreignKeys) {
         foreignKeysByColumn.putIfAbsent(fk.columnName.toLowerCase(), () => []);
         foreignKeysByColumn[fk.columnName.toLowerCase()]!.add(fk);
       }
 
-      final mutableMap = <String, int>{};
-      if (node.table.columns.isEmpty) {
+      if (table.columns.isEmpty) {
         drawText(node.x + 1, node.y + 3, fit('(sem colunas)', innerWidth));
       } else {
-        for (var index = 0; index < node.table.columns.length; index++) {
-          final column = node.table.columns[index];
+        for (var index = 0; index < table.columns.length; index++) {
+          final column = table.columns[index];
           final tags = <String>[];
           if (column.isPrimaryKey) tags.add('PK');
           if ((foreignKeysByColumn[column.name.toLowerCase()] ??
@@ -311,57 +253,38 @@ class TableGraphLayoutComponent extends StatelessComponent {
           final label = _buildColumnLabel(column, tags);
           final lineY = node.y + 3 + index;
           final relationColor =
-              columnColorByKey[_columnKey(node.table.name, column.name)];
+              columnColorByKey[_columnKey(table.name, column.name)];
           drawText(
             node.x + 1,
             lineY,
             fit(label, innerWidth),
             color: relationColor,
           );
-          mutableMap[column.name.toLowerCase()] = lineY;
         }
       }
-
-      nodesByName[entry.key] = _TableNodeLayout(
-        table: node.table,
-        x: node.x,
-        y: node.y,
-        width: node.width,
-        height: node.height,
-        columnYByName: mutableMap,
-      );
     }
 
-    for (var edgeIndex = 0; edgeIndex < layout.edges.length; edgeIndex++) {
-      final edge = layout.edges[edgeIndex];
-      final edgeColor = edgeColorByIndex[edgeIndex];
-      final source = nodesByName[edge.sourceTable.toLowerCase()];
-      final target = nodesByName[edge.targetTable.toLowerCase()];
-      if (source == null || target == null) continue;
-
-      final sourceY = source.columnAnchorY(edge.sourceColumn);
-      final targetY = target.columnAnchorY(edge.targetColumn);
-      final sourceToRight = target.centerX >= source.centerX;
-      final sourceOutX = sourceToRight
-          ? (source.x + source.width)
-          : (source.x - 1);
-      final targetInX = sourceToRight
-          ? (target.x - 1)
-          : (target.x + target.width);
-      var midX = (sourceOutX + targetInX) ~/ 2;
-
-      if (sourceToRight && targetInX <= sourceOutX) {
-        midX = sourceOutX + 2;
-      } else if (!sourceToRight && targetInX >= sourceOutX) {
-        midX = sourceOutX - 2;
+    for (final routed in routingPlan.routedEdges) {
+      final edgeColor = edgeColorByIndex[routed.edgeIndex];
+      for (final segment in routed.segments) {
+        if (segment.orientation == RouteOrientation.horizontal) {
+          drawHorizontal(segment.y1, segment.x1, segment.x2, color: edgeColor);
+        } else {
+          drawVertical(segment.x1, segment.y1, segment.y2, color: edgeColor);
+        }
       }
-
-      drawHorizontal(sourceY, sourceOutX, midX, color: edgeColor);
-      drawVertical(midX, sourceY, targetY, color: edgeColor);
-      drawHorizontal(targetY, midX, targetInX, color: edgeColor);
-      drawAt(midX, sourceY, '+', color: edgeColor);
-      drawAt(midX, targetY, '+', color: edgeColor);
-      drawAt(targetInX, targetY, sourceToRight ? '>' : '<', color: edgeColor);
+      for (var s = 0; s < routed.segments.length - 1; s++) {
+        final joint = routed.segments[s];
+        drawAt(joint.x2, joint.y2, '+', color: edgeColor);
+      }
+      final arrow = routed.arrowPoint;
+      final arrowChar = switch (arrow.direction) {
+        ArrowDirection.up => '^',
+        ArrowDirection.down => 'v',
+        ArrowDirection.left => '<',
+        ArrowDirection.right => '>',
+      };
+      drawAt(arrow.x, arrow.y, arrowChar, color: edgeColor);
     }
 
     final lines = <Component>[];
