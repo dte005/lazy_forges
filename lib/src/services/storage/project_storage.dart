@@ -49,7 +49,7 @@ class ProjectStorage {
           ),
         );
       } catch (_) {
-        // Ignora arquivos inválidos.
+        // Ignore invalid files.
       }
     }
 

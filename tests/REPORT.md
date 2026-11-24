@@ -1,85 +1,82 @@
-# Relatório de testes — LazyForge
+# Test report — LazyForge
 
-Execução sob demanda do agente **Dart Test Creator**, focada na sessão que
-implementou a correção da issue #2 (linhas de relacionamento do grafo
-cruzando tabelas, `specs/001-fix-graph-relation-lines/`). Não existiam testes
-em `tests/` antes desta execução (apenas o esqueleto vazio em
-`test/lazy_forge_test.dart`).
+On-demand run of the **Dart Test Creator** agent, focused on the session that
+implemented the fix for issue #2 (graph relationship lines crossing tables,
+`specs/001-fix-graph-relation-lines/`). There were no tests under `tests/`
+before this run (only the empty skeleton in `test/lazy_forge_test.dart`).
 
-## Resumo
+## Summary
 
-| Métrica | Valor |
+| Metric | Value |
 | --- | --- |
-| Funcionalidades cobertas (completas) | 24 de 24 (100%) |
-| Funcionalidades com cobertura parcial | 0 |
-| Funcionalidades sem teste | 0 |
-| Cobertura de linhas (lib/) | não coletada nesta rodada — ver "Pendências" |
-| Testes | 115 passando, 0 falhando, 0 ignorados |
+| Features covered (complete) | 24 of 24 (100%) |
+| Features with partial coverage | 0 |
+| Features with no test | 0 |
+| Line coverage (lib/) | not collected this round — see "Open items" |
+| Tests | 115 passing, 0 failing, 0 skipped |
 
-**Atualização pós-relatório**: o Bug 1 descrito abaixo foi encontrado por
-esta rodada de testes e **corrigido na mesma sessão de implementação**
-(fora do escopo original deste agente de testes, mas registrado aqui para
-rastreabilidade). Os dois testes que estavam `skip` foram reativados e agora
-passam — ver "Bugs encontrados" para o detalhe técnico da correção aplicada.
+**Post-report update**: Bug 1 described below was found by this test round and
+**fixed in the same implementation session** (outside the original scope of
+this test agent, but recorded here for traceability). The two tests that were
+`skip` were re-enabled and now pass — see "Bugs found" for the technical detail
+of the applied fix.
 
-## Funcionalidades
+## Features
 
-| ID | Funcionalidade | Status | Arquivo de teste |
+| ID | Feature | Status | Test file |
 | --- | --- | --- | --- |
-| F01 | `create table` (com/sem `--autoincrement`) | Coberta | `tests/features/table_commands_feature_test.dart` |
-| F02 | `delete table` / `drop table` | Coberta | `tests/features/table_commands_feature_test.dart` |
-| F03 | `add column` (sintaxe curta) | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F04 | `add column ... to ...` (sintaxe verbosa) | Coberta | `tests/features/column_commands_feature_test.dart`, `tests/unit/.../commands_provider_test.dart` |
-| F05 | `add columns` (lote) | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F06 | `set pk` | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F07 | `add fk` | Coberta | `tests/features/relationship_commands_feature_test.dart` |
-| F08 | `rename table` / `change table` | Coberta | `tests/features/table_commands_feature_test.dart` |
-| F09 | `rename column` / `change column` | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F10 | `alter column ... type` / `change column ... type` | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F11 | `set database` | Coberta | `tests/features/database_engine_feature_test.dart` |
-| F12 | `show database` | Coberta | `tests/features/database_engine_feature_test.dart` |
-| F13 | `show types` | Coberta | `tests/features/database_engine_feature_test.dart` |
-| F14 | `show tables` | Coberta | `tests/features/table_commands_feature_test.dart` |
-| F15 | `history` | Coberta | `tests/features/editor_history_feature_test.dart` |
-| F16 | `help` | Coberta | `tests/features/editor_history_feature_test.dart` |
-| F17 | Encadeamento de comandos com ` - ` | Coberta | `tests/features/editor_history_feature_test.dart` |
-| F18 | Comando inválido/vazio | Coberta | `tests/features/editor_history_feature_test.dart` |
-| F19 | `export [arquivo.sql]` | Coberta | `tests/features/export_ddl_feature_test.dart` |
-| F20 | Colunas enum / `options(...)` | Coberta | `tests/features/column_commands_feature_test.dart` |
-| F21 | Salvar/reabrir projeto (`ProjectStorage`) | Coberta | `tests/features/project_persistence_feature_test.dart`, `tests/unit/services/storage/project_storage_test.dart` |
-| F22 | Layout do grafo (`GraphLayoutEngine`) | Coberta | `tests/unit/.../graph_layout_test.dart` |
-| F23 | Roteamento das linhas do grafo (`GraphRoutingEngine`, issue #2) | Coberta | `tests/unit/.../graph_routing_test.dart` |
-| F24 | `SchemaState`/`TableDef`/`ColumnDef` `toJson`/`fromJson` | Coberta | `tests/unit/.../schema_model_test.dart` |
+| F01 | `create table` (with/without `--autoincrement`) | Covered | `tests/features/table_commands_feature_test.dart` |
+| F02 | `delete table` / `drop table` | Covered | `tests/features/table_commands_feature_test.dart` |
+| F03 | `add column` (short syntax) | Covered | `tests/features/column_commands_feature_test.dart` |
+| F04 | `add column ... to ...` (verbose syntax) | Covered | `tests/features/column_commands_feature_test.dart`, `tests/unit/.../commands_provider_test.dart` |
+| F05 | `add columns` (batch) | Covered | `tests/features/column_commands_feature_test.dart` |
+| F06 | `set pk` | Covered | `tests/features/column_commands_feature_test.dart` |
+| F07 | `add fk` | Covered | `tests/features/relationship_commands_feature_test.dart` |
+| F08 | `rename table` / `change table` | Covered | `tests/features/table_commands_feature_test.dart` |
+| F09 | `rename column` / `change column` | Covered | `tests/features/column_commands_feature_test.dart` |
+| F10 | `alter column ... type` / `change column ... type` | Covered | `tests/features/column_commands_feature_test.dart` |
+| F11 | `set database` | Covered | `tests/features/database_engine_feature_test.dart` |
+| F12 | `show database` | Covered | `tests/features/database_engine_feature_test.dart` |
+| F13 | `show types` | Covered | `tests/features/database_engine_feature_test.dart` |
+| F14 | `show tables` | Covered | `tests/features/table_commands_feature_test.dart` |
+| F15 | `history` | Covered | `tests/features/editor_history_feature_test.dart` |
+| F16 | `help` | Covered | `tests/features/editor_history_feature_test.dart` |
+| F17 | Command chaining with ` - ` | Covered | `tests/features/editor_history_feature_test.dart` |
+| F18 | Invalid/empty command | Covered | `tests/features/editor_history_feature_test.dart` |
+| F19 | `export [file.sql]` | Covered | `tests/features/export_ddl_feature_test.dart` |
+| F20 | Enum columns / `options(...)` | Covered | `tests/features/column_commands_feature_test.dart` |
+| F21 | Save/reopen project (`ProjectStorage`) | Covered | `tests/features/project_persistence_feature_test.dart`, `tests/unit/services/storage/project_storage_test.dart` |
+| F22 | Graph layout (`GraphLayoutEngine`) | Covered | `tests/unit/.../graph_layout_test.dart` |
+| F23 | Graph line routing (`GraphRoutingEngine`, issue #2) | Covered | `tests/unit/.../graph_routing_test.dart` |
+| F24 | `SchemaState`/`TableDef`/`ColumnDef` `toJson`/`fromJson` | Covered | `tests/unit/.../schema_model_test.dart` |
 
-Inventário completo (com fonte de cada item) em `tests/features/FEATURES.md`.
+Full inventory (with source for each item) in `tests/features/FEATURES.md`.
 
-## Arquivos com menor cobertura de linhas
+## Files with lowest line coverage
 
-Não foi possível medir % de linhas nesta rodada (ver "Pendências"). Com base
-na leitura manual do código e nos testes escritos, os arquivos com ramos mais
-difíceis de alcançar via testes públicos são:
+Line % could not be measured this round (see "Open items"). Based on manual
+code reading and the tests written, the files with branches hardest to reach
+via public tests are:
 
-1. `lib/src/components/editor/components/table/table_component.dart` — é
-   componente de UI (`nocterm`) que apenas consome `GraphLayoutEngine` e
-   `GraphRoutingEngine` para desenhar; não foi testado diretamente (ver
-   "Pendências").
-2. `lib/src/components/editor/components/table/graph_routing.dart` — a
-   maior parte dos ramos de classificação (`_EdgeKind`) está exercitada, mas
-   o ramo de "bypass" com múltiplas relações simultâneas em corredores de
-   margem (`marginCorridors`, lane > 1) não foi testado em profundidade além
-   do caso básico.
-3. `lib/src/components/init/components/init_component.dart` e
-   `lib/src/components/editor/editor_component.dart` — telas do `nocterm`,
-   não exercitadas (ver "Pendências").
-4. `lib/src/services/clipboard_service.dart` — não lido/testado nesta rodada
-   (fora do escopo desta sessão; sem comando de usuário mapeado no README).
-5. `lib/src/main.dart` — ponto de entrada, não testado (ver "Ignorados").
+1. `lib/src/components/editor/components/table/table_component.dart` — UI
+   component (`nocterm`) that only consumes `GraphLayoutEngine` and
+   `GraphRoutingEngine` to draw; not tested directly (see "Open items").
+2. `lib/src/components/editor/components/table/graph_routing.dart` — most
+   classification branches (`_EdgeKind`) are exercised, but the "bypass"
+   branch with multiple simultaneous relationships on margin corridors
+   (`marginCorridors`, lane > 1) was not tested in depth beyond the basic case.
+3. `lib/src/components/init/components/init_component.dart` and
+   `lib/src/components/editor/editor_component.dart` — `nocterm` screens, not
+   exercised (see "Open items").
+4. `lib/src/services/clipboard_service.dart` — not read/tested this round
+   (out of scope for this session; no user command mapped in the README).
+5. `lib/src/main.dart` — entry point, not tested (see "Skipped").
 
-## Criados / Atualizados / Ignorados
+## Created / Updated / Skipped
 
-### Criados
+### Created
 
-- `tests/features/FEATURES.md` — inventário de funcionalidades.
+- `tests/features/FEATURES.md` — feature inventory.
 - `tests/features/table_commands_feature_test.dart`
 - `tests/features/column_commands_feature_test.dart`
 - `tests/features/relationship_commands_feature_test.dart`
@@ -92,107 +89,100 @@ difíceis de alcançar via testes públicos são:
 - `tests/unit/components/editor/components/table/graph_layout_test.dart`
 - `tests/unit/components/editor/components/table/graph_routing_test.dart`
 - `tests/unit/services/storage/project_storage_test.dart`
-- `tests/REPORT.md` (este arquivo)
+- `tests/REPORT.md` (this file)
 
-### Atualizados
+### Updated
 
-Nenhum teste pré-existente em `tests/` (não havia nenhum). Nenhum arquivo em
-`lib/`, `bin/` ou `pubspec.yaml` foi alterado.
+No pre-existing tests under `tests/` (there were none). No files under
+`lib/`, `bin/`, or `pubspec.yaml` were changed.
 
-### Ignorados (não geramos teste para)
+### Skipped (no test generated for)
 
-- `test/lazy_forge_test.dart` — esqueleto vazio pré-existente, fora do
-  escopo de `tests/`. **Não foi apagado nem expandido**, conforme instrução
-  do agente. Pergunta ao usuário: pode ser removido?
-- `lib/lazy_forge.dart` — barril público, sem lógica própria.
-- `lib/src/main.dart` — ponto de entrada (`main()`), monta a árvore do
-  `nocterm` e chama `runApp`; sem comportamento isolável sem subir a TUI
-  real.
+- `test/lazy_forge_test.dart` — pre-existing empty skeleton, outside the
+  scope of `tests/`. **Was neither deleted nor expanded**, per agent
+  instruction. Question for the user: can it be removed?
+- `lib/lazy_forge.dart` — public barrel, no logic of its own.
+- `lib/src/main.dart` — entry point (`main()`), builds the `nocterm` tree and
+  calls `runApp`; no isolatable behavior without starting the real TUI.
 - `lib/src/components/editor/components/table/components/table_box.dart`,
   `lib/src/components/editor/components/sidebar/sidebar_component.dart`,
   `lib/src/components/editor/components/vertical_divider/vertical_divider_component.dart`,
   `lib/src/components/editor/editor_component.dart`,
-  `lib/src/components/init/components/init_component.dart` — componentes de
-  renderização/tela do `nocterm`. Não foi viável testar fluxos de tela nesta
-  rodada (ver "Pendências").
-- `lib/src/services/clipboard_service.dart` — fora do escopo da sessão atual
-  (não tocado pela correção da issue #2) e sem comando de usuário mapeado no
-  README para dirigir um teste de funcionalidade; não testado para não
-  ampliar demais o escopo desta rodada.
+  `lib/src/components/init/components/init_component.dart` — `nocterm`
+  rendering/screen components. Screen flows were not feasible to test this
+  round (see "Open items").
+- `lib/src/services/clipboard_service.dart` — out of scope for the current
+  session (not touched by the issue #2 fix) and no user command mapped in the
+  README to drive a feature test; left untested to avoid widening this round's
+  scope too far.
 
-## Bugs encontrados no código (corrigido após esta rodada de testes)
+## Bugs found in code (fixed after this test round)
 
-### Bug 1 — `GraphRoutingEngine` cruzava tabelas no "bypass" dentro da mesma linha/coluna quando havia 3+ tabelas e a relação pulava mais de uma (CORRIGIDO)
+### Bug 1 — `GraphRoutingEngine` crossed tables on same-row/column "bypass" when there were 3+ tables and the relationship skipped more than one (FIXED)
 
-- **Onde**: `lib/src/components/editor/components/table/graph_routing.dart`,
-  caso `_EdgeKind.sameRowBypass` / `_EdgeKind.rowSkipBypass` (mesmo bloco de
-  código, por volta da linha ~555).
-- **O que acontece**: para uma FK entre colunas não-adjacentes da mesma linha
-  (ex.: tabela `a`, `b`, `c` lado a lado, FK de `a` para `c`), o primeiro
-  segmento do contorno é traçado **na altura (Y) da âncora da coluna de
-  origem, atravessando a linha inteira** até a margem lateral, antes de virar
-  na vertical. Como todas as tabelas da mesma linha compartilham a mesma
-  faixa de Y, esse segmento horizontal passa visualmente por cima de
-  qualquer tabela intermediária (no exemplo, `b`) antes de sair para a
-  margem — viola o **FR-001** da spec
-  `specs/001-fix-graph-relation-lines/spec.md` ("nunca é aceitável um
-  cruzamento residual"). O caso simétrico entre linhas (tabelas empilhadas na
-  mesma coluna, pulando mais de uma linha) **funciona corretamente**, porque
-  nesse caso as tabelas intermediárias não compartilham o mesmo X usado pela
-  margem.
-- **Como reproduzir** (testes documentando o comportamento esperado, com
-  `skip` citando este bug):
+- **Where**: `lib/src/components/editor/components/table/graph_routing.dart`,
+  case `_EdgeKind.sameRowBypass` / `_EdgeKind.rowSkipBypass` (same code block,
+  around line ~555).
+- **What happens**: for an FK between non-adjacent columns on the same row
+  (e.g. tables `a`, `b`, `c` side by side, FK from `a` to `c`), the first
+  outline segment is drawn **at the Y height of the source column anchor,
+  across the entire row** to the side margin, before turning vertical. Because
+  all tables on the same row share the same Y band, that horizontal segment
+  visually passes over any intermediate table (in the example, `b`) before
+  exiting to the margin — violates **FR-001** of the spec
+  `specs/001-fix-graph-relation-lines/spec.md` ("a residual crossing is never
+  acceptable"). The symmetric case between rows (tables stacked in the same
+  column, skipping more than one row) **works correctly**, because in that case
+  intermediate tables do not share the same X used by the margin.
+- **How to reproduce** (tests documenting expected behavior, with `skip`
+  citing this bug):
   `tests/unit/components/editor/components/table/graph_routing_test.dart`,
-  grupo "GraphRoutingEngine.plan — regressão da issue #2 (não cruzar
-  tabelas)", testes "FK entre colunas não-adjacentes da mesma linha contorna
-  pela margem, sem atravessar a tabela do meio" e "nenhum segmento roteado
-  atravessa uma tabela que não é origem nem destino, num grafo com múltiplas
-  tabelas e relações".
-- **Impacto prático**: ocorre em schemas com 3 ou mais tabelas desenhadas na
-  mesma linha do grafo (ou mesma coluna, após quebra por `maxColumns`) quando
-  existe uma FK entre duas delas que não são vizinhas diretas na mesma linha.
-  É exatamente um dos cenários centrais que a issue #2 pedia para corrigir
-  ("quando o espaçamento atual... MUST aumentar... nunca é aceitável um
-  cruzamento residual").
-- **Sugestão aplicada (correção implementada na mesma sessão)**: o caso
-  `sameRowBypass`/`rowSkipBypass` deixou de sair lateralmente na altura (Y)
-  da âncora de coluna. Agora o roteamento sempre escapa primeiro por cima da
-  própria tabela de origem (um segmento vertical até a faixa imediatamente
-  acima da sua linha — faixa que nunca contém tabelas, inclusive para a
-  linha 0, onde essa faixa é a margem superior), depois percorre
-  horizontalmente até a margem externa (fora de todas as colunas), desce ou
-  sobe pela margem até a faixa acima da linha de destino, percorre
-  horizontalmente até a tabela de destino e entra por cima dela. Como a
-  faixa logo acima de qualquer linha é sempre livre e a margem externa fica
-  fora dos limites de todas as tabelas, nenhum segmento cruza tabelas
-  intermediárias, independentemente de quantas tabelas existam na mesma
-  linha/coluna. Os dois testes antes marcados `skip` foram reativados e
-  passam, assim como um novo teste equivalente adicionado para múltiplos
-  "bypasses" simultâneos na mesma linha.
+  group "GraphRoutingEngine.plan — issue #2 regression (do not cross tables)",
+  tests "FK between non-adjacent columns on the same row routes via the
+  margin, without crossing the middle table" and "no routed segment crosses a
+  table that is neither source nor destination, in a graph with multiple
+  tables and relationships".
+- **Practical impact**: occurs in schemas with 3 or more tables drawn on the
+  same graph row (or same column, after wrapping by `maxColumns`) when there
+  is an FK between two that are not direct neighbors on the same row. This is
+  exactly one of the central scenarios issue #2 asked to fix ("when current
+  spacing... MUST increase... a residual crossing is never acceptable").
+- **Applied suggestion (fix implemented in the same session)**: the
+  `sameRowBypass`/`rowSkipBypass` case no longer exits sideways at the column
+  anchor Y. Routing now always escapes first above the source table itself (a
+  vertical segment to the band immediately above its row — a band that never
+  contains tables, including for row 0, where that band is the top margin),
+  then travels horizontally to the outer margin (outside all columns), goes
+  down or up along the margin to the band above the destination row, travels
+  horizontally to the destination table, and enters from above it. Because the
+  band just above any row is always free and the outer margin sits outside all
+  table bounds, no segment crosses intermediate tables, regardless of how many
+  tables sit on the same row/column. The two tests previously marked `skip`
+  were re-enabled and pass, as does a new equivalent test added for multiple
+  simultaneous "bypasses" on the same row.
 
-## Pendências e decisões que precisam do usuário
+## Open items and decisions that need the user
 
-1. **Dependência `coverage` para medir % de linhas**: não está no
-   `pubspec.yaml` e não há `coverage` ativado globalmente neste ambiente sem
-   alterar o projeto (`dart pub global list` não lista `coverage`). Conforme
-   instrução desta execução, **não adicionei a dependência nem rodei
-   `dart pub global activate coverage`** — isso exige aprovação explícita do
-   usuário (via `dart pub add dev:coverage` ou
-   `dart pub global activate coverage`). Sem isso, o relatório traz apenas a
-   cobertura de funcionalidades.
-2. **Bug encontrado e corrigido** (ver seção acima) — o roteamento de
-   "bypass" intra-linha/coluna com 3+ tabelas foi corrigido na mesma sessão;
-   os dois testes afetados foram reativados (sem `skip`) e passam.
-3. **`test/lazy_forge_test.dart`**: esqueleto vazio pré-existente fora de
-   `tests/`. Pode ser removido? Não mexi nele, conforme instrução do agente.
-4. **Telas do `nocterm`** (fluxo de teclas no editor, tela de Help,
-   sidebar, tela de init): não foram cobertas nesta rodada. `nocterm` expõe
-   `testNocterm`/`NoctermTester` (`lib/nocterm_test.dart` no pacote
-   instalado), mas investigar e escrever esses testes de tela teria um custo
-   de tempo maior do que o orçado para esta execução; ficou fora do escopo
-   desta rodada focada na issue #2. Pode ser retomado numa próxima chamada
-   deste agente, se aprovado.
-5. **`clipboard_service.dart`**: não há comando de usuário documentado no
-   README que o exercite diretamente; não foi testado para não ampliar o
-   escopo além do que a sessão tocou. Se houver um fluxo de uso real, avisar
-   para que entre no próximo inventário.
+1. **`coverage` dependency to measure line %**: it is not in `pubspec.yaml`
+   and `coverage` is not activated globally in this environment without
+   changing the project (`dart pub global list` does not list `coverage`). Per
+   this run's instructions, **I did not add the dependency nor run
+   `dart pub global activate coverage`** — that requires explicit user
+   approval (via `dart pub add dev:coverage` or
+   `dart pub global activate coverage`). Without that, the report only covers
+   feature coverage.
+2. **Bug found and fixed** (see section above) — same-row/column "bypass"
+   routing with 3+ tables was fixed in the same session; the two affected
+   tests were re-enabled (no `skip`) and pass.
+3. **`test/lazy_forge_test.dart`**: pre-existing empty skeleton outside
+   `tests/`. Can it be removed? I did not touch it, per agent instruction.
+4. **`nocterm` screens** (key flows in the editor, Help screen, sidebar, init
+   screen): not covered this round. `nocterm` exposes
+   `testNocterm`/`NoctermTester` (`lib/nocterm_test.dart` in the installed
+   package), but investigating and writing those screen tests would cost more
+   time than budgeted for this run; left out of scope for this issue #2–focused
+   round. Can be resumed on a later call of this agent, if approved.
+5. **`clipboard_service.dart`**: no user command documented in the README that
+   exercises it directly; left untested to avoid widening scope beyond what
+   this session touched. If there is a real usage flow, say so so it can enter
+   the next inventory.

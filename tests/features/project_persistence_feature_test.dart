@@ -1,8 +1,8 @@
-// Testes de funcionalidade: criar, salvar, listar e reabrir projetos via
-// `ProjectStorage`, incluindo a persistência automática disparada por
+// Testes de feature: createsr, salvar, listar e reabrir projetos via
+// `ProjectStorage`, including automatic persistence triggered by
 // `EditorProvider` quando um comando tem `shouldPersist = true`. Usa um
-// diretório temporário isolado via `IOOverrides` para nunca escrever no
-// repositório.
+// temporary directory isolado via `IOOverrides` para never escrever no
+// repository.
 import 'dart:io';
 
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';

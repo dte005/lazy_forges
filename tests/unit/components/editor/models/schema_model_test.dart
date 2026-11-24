@@ -1,6 +1,6 @@
-// Testes unitários: round-trip de (de)serialização e regras de domínio do
-// `SchemaState` / `TableDef` / `ColumnDef` que não são exercitadas em
-// profundidade pelos testes de funcionalidade.
+// Unit tests: (de)serialization round-trip and domain rules of
+// `SchemaState` / `TableDef` / `ColumnDef` not exercised in
+// profundidade pelos testes de feature.
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/shared/models/enums.dart';
 import 'package:test/test.dart';

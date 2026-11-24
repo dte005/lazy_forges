@@ -1,4 +1,4 @@
-// Testes de funcionalidade: foreign keys e seu impacto no DDL exportado.
+// Testes de feature: foreign keys e seu impacto no DDL exportado.
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart';
 import 'package:lazy_forge/src/services/storage/project_storage.dart';

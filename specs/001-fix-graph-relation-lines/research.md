@@ -1,147 +1,147 @@
-# Research: Corrigir linhas de relacionamento transpassando tabelas no grafo
+# Research: Fix relationship lines crossing tables in the graph
 
 **Feature**: [spec.md](./spec.md) | **Date**: 2026-10-08
 
-Não há itens `NEEDS CLARIFICATION` pendentes no Technical Context do
-`plan.md` — a stack (Dart + `nocterm`, sem dependências novas, sem testes
-automatizados) já é conhecida e fixada pelo projeto. Esta pesquisa cobre as
-decisões de abordagem técnica necessárias para cumprir o comportamento
-definido no spec (causa raiz confirmada + clarifications).
+There are no pending `NEEDS CLARIFICATION` items in the Technical Context of
+`plan.md` — the stack (Dart + `nocterm`, no new dependencies, no automated
+tests) is already known and fixed by the project. This research covers the
+technical approach decisions needed to meet the behavior
+defined in the spec (confirmed root cause + clarifications).
 
-## Decisão 1 — Como detectar e evitar cruzamento com tabelas
+## Decision 1 — How to detect and avoid crossing tables
 
-**Decision**: Antes de desenhar as linhas, construir uma lista de
-**obstáculos** (retângulos `x, y, width, height` de cada tabela já
-posicionada pelo `GraphLayoutEngine`). O roteamento de cada relação passa a
-ser feito sobre esse mapa de obstáculos: qualquer segmento horizontal ou
-vertical candidato é validado contra os retângulos de todas as tabelas
-exceto a de origem e a de destino daquela relação. Se um segmento cruzaria um
-obstáculo, o roteamento desvia pelo corredor livre mais próximo (acima/abaixo
-da linha de tabelas, ou à esquerda/direita da coluna), em vez de apenas traçar
-o ponto médio geométrico como hoje.
+**Decision**: Before drawing lines, build a list of
+**obstacles** (rectangles `x, y, width, height` of each table already
+positioned by `GraphLayoutEngine`). Routing of each relation is then
+done over that obstacle map: any candidate horizontal or
+vertical segment is validated against the rectangles of all tables
+except the source and target of that relation. If a segment would cross an
+obstacle, routing detours through the nearest free corridor (above/below
+the table row, or left/right of the column), instead of only tracing
+the geometric midpoint as today.
 
-**Rationale**: é a forma mínima de corrigir a causa raiz #1 (roteamento cego
-à posição de outras tabelas) sem reescrever o `GraphLayoutEngine` nem mudar a
-ordenação das tabelas (fora de escopo). Resolver por geometria explícita
-(retângulos) é mais simples e previsível em um grid de texto do que portar um
-algoritmo de pathfinding genérico.
-
-**Alternatives considered**:
-- *A\* / busca de caminho célula a célula sobre todo o canvas*: resolveria o
-  problema, mas é complexidade desproporcional para um layout em grade
-  conhecida (tabelas em linhas/colunas fixas) e arriscaria regressão de
-  performance em schemas grandes (Princípio V). Rejeitada por violar
-  Simplicidade Deliberada sem necessidade comprovada.
-- *Ignorar o problema e apenas truncar/ocultar linhas que cruzariam tabelas*:
-  rejeitada porque esconderia relacionamentos reais do usuário, violando o
-  propósito do grafo (Princípio I).
-
-## Decisão 2 — Como decidir o lado de saída/entrada (substitui `sourceToRight`)
-
-**Decision**: A decisão de lado passa a considerar tanto a coluna (posição
-horizontal) quanto a linha/nível (posição vertical) relativa entre origem e
-destino:
-- Mesma linha (nível), colunas diferentes → sai pelo lado horizontal mais
-  próximo do destino (comportamento atual, preservado — FR-006).
-- Mesma coluna (faixa horizontal sobreposta), linhas diferentes → sai/entra
-  verticalmente (topo/base), usando o corredor vertical (`rowGap`) entre as
-  linhas, nunca lateralmente.
-- Linhas e colunas diferentes (diagonal) → combina: sai lateralmente até
-  alinhar com a coluna do destino, depois usa o corredor vertical para mudar
-  de linha, entrando lateralmente no destino.
-- Origem igual ao destino (auto-relacionamento) → trata como um laço: sai por
-  um lado da própria tabela e reentra por um lado adjacente (ex.: direita e
-  depois base), usando apenas espaço fora do retângulo da própria tabela,
-  sem depender de nenhuma outra tabela como referência de lado.
-
-**Rationale**: resolve a causa raiz #2 (decisão baseada só no centro
-horizontal) cobrindo exatamente os casos citados no spec (User Story 2,
-Edge Cases) com regras simples e determinísticas, sem introduzir heurísticas
-de distância genéricas.
+**Rationale**: it is the minimal way to fix root cause #1 (routing blind
+to other tables' positions) without rewriting `GraphLayoutEngine` or changing
+table ordering (out of scope). Solving via explicit geometry
+(rectangles) is simpler and more predictable on a text grid than porting a
+generic pathfinding algorithm.
 
 **Alternatives considered**:
-- *Sempre sair pelo lado mais próximo em linha reta (ângulo)*: mais "natural"
-  visualmente, mas exigiria diagonais, que não existem no conjunto de
-  caracteres do canvas de texto atual (`-`, `|`, `+`, setas). Rejeitada por
-  incompatibilidade com o desenho ortogonal existente.
+- *A\* / cell-by-cell path search over the whole canvas*: would solve the
+  problem, but is disproportionate complexity for a known grid layout
+  (tables in fixed rows/columns) and would risk performance
+  regression on large schemas (Principle V). Rejected for violating
+  Deliberate Simplicity without proven need.
+- *Ignore the problem and only truncate/hide lines that would cross tables*:
+  rejected because it would hide real relationships from the user, violating the
+  purpose of the graph (Principle I).
 
-## Decisão 3 — Como distinguir relações que dividem o mesmo corredor
+## Decision 2 — How to decide exit/entry side (replaces `sourceToRight`)
 
-**Decision**: Cada corredor (um `rowGap` ou `colGap` específico entre duas
-tabelas/linhas adjacentes) passa a ter um conjunto de **pistas** numeradas
-(posições inteiras dentro da largura/altura do corredor). Ao rotear uma
-relação que precisa atravessar um corredor já usado por outra relação, o
-roteamento aloca a próxima pista livre daquele corredor para o segmento
-dessa relação, deslocando o traço em 1 ou mais colunas/linhas em relação ao
-usado por outras relações no mesmo corredor. A ordem de alocação segue a
-ordem das relações no schema (estável e determinística, para não "piscar"
-pistas diferentes entre redesenhos idênticos).
+**Decision**: The side decision now considers both column (horizontal
+position) and row/level (vertical position) relative between source and
+target:
+- Same row (level), different columns → exit on the horizontal side closest
+  to the target (current behavior, preserved — FR-006).
+- Same column (overlapping horizontal band), different rows → exit/enter
+  vertically (top/bottom), using the vertical corridor (`rowGap`) between
+  rows, never laterally.
+- Different rows and columns (diagonal) → combine: exit laterally until
+  aligned with the target column, then use the vertical corridor to change
+  row, entering the target laterally.
+- Source equals target (self-relationship) → treat as a loop: exit one
+  side of the same table and re-enter an adjacent side (e.g. right then
+  bottom), using only space outside the table's own rectangle,
+  without depending on any other table as a side reference.
 
-**Rationale**: implementa diretamente a clarificação do spec ("pistas
-paralelas: cada relação que compartilha um corredor recebe uma posição
-própria"). Também corrige, como efeito colateral correto, a causa raiz #3
-(mesmo `midX` reaproveitado entre relações).
-
-**Alternatives considered**:
-- *Manter um único traço por corredor e só preservar a cor dominante*:
-  rejeitada explicitamente na clarificação (Session 2026-10-08, pergunta 2).
-
-## Decisão 4 — Como garantir zero cruzamento mesmo em layouts densos
-
-**Decision**: Se o número de pistas necessárias em um corredor exceder a
-largura/altura disponível hoje (`colGap = 8`, `rowGap = 3`), o corredor
-afetado é aumentado especificamente o quanto for necessário para comportar
-todas as pistas com espaçamento legível entre elas, e as tabelas posicionadas
-depois desse corredor são deslocadas de acordo (mesma lógica de
-posicionamento cumulativo que `table_component.dart` já usa ao somar
-larguras/alturas + gaps). A ordenação das tabelas em linhas/colunas
-(`GraphLayoutEngine`) não muda — apenas o espaçamento entre elas, quando
-necessário.
-
-**Rationale**: cumpre a clarificação de garantia forte (Session 2026-10-08,
-pergunta 1) sem exigir um motor de layout totalmente novo; é uma extensão
-pontual do cálculo de espaçamento já existente.
+**Rationale**: fixes root cause #2 (decision based only on horizontal
+center) covering exactly the cases cited in the spec (User Story 2,
+Edge Cases) with simple deterministic rules, without introducing generic
+distance heuristics.
 
 **Alternatives considered**:
-- *Aceitar cruzamento residual em casos extremos*: rejeitada explicitamente
-  pela clarificação.
-- *Aumentar todos os corredores do grafo uniformemente, sempre*: mais simples
-  de implementar, mas desperdiça espaço em telas pequenas e se afasta do
-  Princípio VII (Simplicidade Deliberada / nenhuma mudança além do
-  necessário); rejeitada em favor do ajuste pontual por corredor.
+- *Always exit on the side closest in a straight line (angle)*: more "natural"
+  visually, but would require diagonals, which do not exist in the current text
+  canvas character set (`-`, `|`, `+`, arrows). Rejected for
+  incompatibility with the existing orthogonal drawing.
 
-## Decisão 5 — Onde o código deve viver
+## Decision 3 — How to distinguish relations that share the same corridor
 
-**Decision**: Criar `lib/src/components/editor/components/table/graph_routing.dart`
-como módulo puro (sem estado, sem widgets do `nocterm`), responsável por:
-receber `GraphLayoutResult` + posições de tabela já calculadas, e devolver,
-para cada `GraphRelationEdge`, o caminho final (lista de segmentos) e o ponto
-da seta. `table_component.dart` passa a chamar esse módulo em vez de calcular
+**Decision**: Each corridor (a specific `rowGap` or `colGap` between two
+adjacent tables/rows) gets a set of numbered **lanes**
+(integer positions within the corridor width/height). When routing a
+relation that needs to cross a corridor already used by another relation, routing
+allocates the next free lane of that corridor to that relation's
+segment, shifting the stroke by 1 or more columns/rows relative to what
+other relations use in the same corridor. Allocation order follows
+relation order in the schema (stable and deterministic, so lanes do not
+"flicker" differently across identical redraws).
+
+**Rationale**: implements the spec clarification directly ("parallel
+lanes: each relation that shares a corridor receives its own
+position"). Also correctly fixes, as a side effect, root cause #3
+(same `midX` reused across relations).
+
+**Alternatives considered**:
+- *Keep a single stroke per corridor and only preserve the dominant color*:
+  explicitly rejected in the clarification (Session 2026-10-08, question 2).
+
+## Decision 4 — How to guarantee zero crossing even in dense layouts
+
+**Decision**: If the number of lanes needed in a corridor exceeds the
+width/height available today (`colGap = 8`, `rowGap = 3`), the affected
+corridor is increased specifically as much as needed to fit
+all lanes with readable spacing between them, and tables positioned
+after that corridor are shifted accordingly (same cumulative
+positioning logic `table_component.dart` already uses when summing
+widths/heights + gaps). Table ordering in rows/columns
+(`GraphLayoutEngine`) does not change — only spacing between them, when
+needed.
+
+**Rationale**: meets the strong-guarantee clarification (Session 2026-10-08,
+question 1) without requiring a fully new layout engine; it is a pointed
+extension of the existing spacing calculation.
+
+**Alternatives considered**:
+- *Accept residual crossing in extreme cases*: explicitly rejected
+  by the clarification.
+- *Always increase all graph corridors uniformly*: simpler
+  to implement, but wastes space on small screens and drifts from
+  Principle VII (Deliberate Simplicity / no change beyond what is
+  needed); rejected in favor of pointed per-corridor adjustment.
+
+## Decision 5 — Where the code should live
+
+**Decision**: Create `lib/src/components/editor/components/table/graph_routing.dart`
+as a pure module (no state, no `nocterm` widgets), responsible for:
+receiving `GraphLayoutResult` + already computed table positions, and returning,
+for each `GraphRelationEdge`, the final path (list of segments) and the arrow
+point. `table_component.dart` starts calling this module instead of computing
 `midX`/`sourceToRight` inline.
 
-**Rationale**: mantém a separação já existente entre "distribuição em
-linhas" (`graph_layout.dart`) e "desenho" (`table_component.dart`), sem criar
-pastas novas, e torna o roteamento testável manualmente de forma isolada
-(entra layout + obstáculos, sai caminho).
+**Rationale**: keeps the existing separation between "distribution into
+rows" (`graph_layout.dart`) and "drawing" (`table_component.dart`), without creating
+new folders, and makes routing manually testable in isolation
+(layout + obstacles in, path out).
 
 **Alternatives considered**:
-- *Colocar a lógica dentro de `graph_layout.dart`*: misturaria a
-  responsabilidade de "distribuir tabelas em níveis" com "rotear linhas
-  entre posições concretas", que são preocupações diferentes; rejeitada por
-  clareza de responsabilidade.
-- *Colocar tudo inline em `table_component.dart`*: é o estado atual que
-  causou o bug (lógica de roteamento misturada com desenho); rejeitada por
-  ser exatamente o padrão que gerou a causa raiz #1–#3.
+- *Put the logic inside `graph_layout.dart`*: would mix the
+  responsibility of "distribute tables into levels" with "route lines
+  between concrete positions", which are different concerns; rejected for
+  clarity of responsibility.
+- *Put everything inline in `table_component.dart`*: is the current state that
+  caused the bug (routing logic mixed with drawing); rejected for
+  being exactly the pattern that produced root causes #1–#3.
 
-## Resumo das decisões
+## Decision summary
 
-| # | Decisão | Resolve causa raiz / clarificação |
+| # | Decision | Resolves root cause / clarification |
 |---|---|---|
-| 1 | Roteamento consciente de obstáculos (retângulos de tabela) | Causa raiz #1 |
-| 2 | Lado de saída/entrada por linha E coluna relativas (+ laço para auto-FK) | Causa raiz #2, Edge Case auto-relacionamento |
-| 3 | Pistas numeradas por corredor | Causa raiz #3, Clarification 2 |
-| 4 | Aumento pontual de corredor quando pistas não cabem | Clarification 1 |
-| 5 | Novo módulo `graph_routing.dart` | Estrutura/Simplicidade |
+| 1 | Obstacle-aware routing (table rectangles) | Root cause #1 |
+| 2 | Exit/entry side by relative row AND column (+ loop for self-FK) | Root cause #2, self-relationship Edge Case |
+| 3 | Numbered lanes per corridor | Root cause #3, Clarification 2 |
+| 4 | Pointed corridor increase when lanes do not fit | Clarification 1 |
+| 5 | New `graph_routing.dart` module | Structure/Simplicity |
 
-Todas as decisões estão prontas para a Fase 1 (data-model e quickstart); não
-há `NEEDS CLARIFICATION` restante.
+All decisions are ready for Phase 1 (data-model and quickstart); no
+remaining `NEEDS CLARIFICATION`.

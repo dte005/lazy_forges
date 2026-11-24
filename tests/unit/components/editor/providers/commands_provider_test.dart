@@ -1,5 +1,5 @@
-// Testes unitários do `CommandsProvider` isolados de `EditorProvider`,
-// cobrindo ramos de parsing que os testes de funcionalidade não exercitam
+// Unit tests for `CommandsProvider` isolated from `EditorProvider`,
+// covering parsing branches that feature tests do not exercise
 // diretamente (ex.: sintaxe verbosa com options/description e specs
 // malformadas em lote).
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
@@ -84,7 +84,7 @@ void main() {
   });
 }
 
-/// Pequeno wrapper para expor os três campos relevantes de
+/// Small wrapper to expose the three relevant fields
 /// `EditorCommandResult` sem acoplar os testes ao tipo exato.
 class EditorCommandResultLike {
   EditorCommandResultLike(this.success, this.message, this.shouldPersist);

@@ -1,4 +1,4 @@
-# Implementation Plan: Corrigir linhas de relacionamento transpassando tabelas no grafo
+# Implementation Plan: Fix relationship lines crossing tables in the graph
 
 **Branch**: `001-fix-graph-relation-lines` | **Date**: 2026-10-08 | **Spec**: [spec.md](./spec.md)
 
@@ -8,101 +8,101 @@
 
 ## Summary
 
-O grafo de relacionamentos do editor (`table_component.dart` + `graph_layout.dart`)
-roteia cada linha de relacionamento sem conhecimento geométrico das outras
-tabelas já posicionadas, decide o lado de saída/entrada olhando só o centro
-horizontal das tabelas, e não reserva espaço próprio para relações que
-compartilham o mesmo corredor. Isso causa linhas atravessando tabelas, setas
-mal posicionadas e relações indistinguíveis quando próximas (issue #2).
+The editor relationship graph (`table_component.dart` + `graph_layout.dart`)
+routes each relationship line without geometric knowledge of other
+already positioned tables, decides the exit/entry side looking only at the
+horizontal center of tables, and does not reserve its own space for relations that
+share the same corridor. That causes lines crossing tables, poorly
+positioned arrows, and indistinguishable relations when nearby (issue #2).
 
-A abordagem técnica introduz uma etapa de **roteamento consciente de
-obstáculos e pistas (lanes)**, executada depois do `GraphLayoutEngine` atual e
-antes do desenho em `table_component.dart`:
+The technical approach introduces an **obstacle- and lane-aware routing**
+step, run after the current `GraphLayoutEngine` and
+before drawing in `table_component.dart`:
 
-1. Construir, a cada renderização, a lista de retângulos ocupados por cada
-   tabela já posicionada (obstáculos).
-2. Para cada relação, escolher a estratégia de saída/entrada (lateral,
-   vertical ou combinada) com base na posição relativa real entre origem e
-   destino — linha (nível) e coluna —, não apenas no centro horizontal.
-3. Alocar cada segmento de relação a uma **pista** dentro do corredor
-   (colGap/rowGap) que ele atravessa; relações que dividem o mesmo corredor
-   recebem posições (offsets) distintas dentro dele.
-4. Se o espaço disponível em um corredor não comportar todas as pistas
-   necessárias, aumentar esse corredor especificamente (recalculando as
-   posições das tabelas afetadas) o quanto for preciso — nunca aceitar
-   cruzamento residual.
-5. Antes de desenhar, validar que nenhum segmento do caminho final cruza o
-   retângulo de uma tabela que não seja a origem ou o destino daquela relação
-   (incluindo o caso de auto-relacionamento, tratado como um laço que sai e
-   reentra na mesma tabela por lados diferentes).
+1. Build, on every render, the list of rectangles occupied by each
+   already positioned table (obstacles).
+2. For each relation, choose the exit/entry strategy (lateral,
+   vertical, or combined) based on the real relative position between source and
+   target — row (level) and column — not only the horizontal center.
+3. Allocate each relation segment to a **lane** within the corridor
+   (`colGap`/`rowGap`) it crosses; relations that share the same corridor
+   receive distinct positions (offsets) within it.
+4. If the available space in a corridor cannot fit all required
+   lanes, increase that corridor specifically (recomputing positions of
+   affected tables) as much as needed — never accept a residual
+   crossing.
+5. Before drawing, validate that no segment of the final path crosses the
+   rectangle of a table that is not the source or target of that relation
+   (including self-relationship, treated as a loop that exits and
+   re-enters the same table on different sides).
 
-Nenhuma dependência nova é necessária; a mudança fica contida na mesma pasta
-(`lib/src/components/editor/components/table/`), como um novo módulo auxiliar
-de roteamento consumido por `table_component.dart`.
+No new dependency is required; the change stays in the same folder
+(`lib/src/components/editor/components/table/`), as a new helper routing
+module consumed by `table_component.dart`.
 
 ## Technical Context
 
-**Language/Version**: Dart (SDK ^3.11.4, conforme `pubspec.yaml`)
+**Language/Version**: Dart (SDK ^3.11.4, per `pubspec.yaml`)
 
-**Primary Dependencies**: `nocterm` (TUI já usado pelo projeto); nenhuma
-dependência nova é introduzida por esta correção.
+**Primary Dependencies**: `nocterm` (TUI already used by the project); no
+new dependency is introduced by this fix.
 
-**Storage**: N/A — o grafo é recalculado em memória a partir do `SchemaState`
-a cada renderização; não há persistência de layout (FR-007). Os arquivos de
-projeto em `lazyforge_projects/` continuam sendo lidos sem alteração de
-formato.
+**Storage**: N/A — the graph is recalculated in memory from `SchemaState`
+on every render; there is no layout persistence (FR-007). Project files
+in `lazyforge_projects/` continue to be read without format
+change.
 
-**Testing**: N/A — o projeto não exige suíte de testes automatizados
-(decisão da constituição); validação por revisão manual conforme
+**Testing**: N/A — the project does not require an automated test suite
+(constitution decision); validation by manual review per
 `quickstart.md`.
 
-**Target Platform**: Terminal multiplataforma (Linux, WSL, macOS, Windows);
-bug reportado em Linux/WSL, mas a correção deve valer para qualquer terminal
-suportado pelo `nocterm`.
+**Target Platform**: Cross-platform terminal (Linux, WSL, macOS, Windows);
+bug reported on Linux/WSL, but the fix must apply to any terminal
+supported by `nocterm`.
 
-**Project Type**: Aplicação de terminal (TUI) single-project em Dart.
+**Project Type**: Single-project terminal application (TUI) in Dart.
 
-**Performance Goals**: Redesenho do grafo perceptivelmente instantâneo a cada
-comando (referência: abaixo de ~100ms), mantendo o padrão já exigido pela
-constituição (Princípio V — Velocidade Percebida como Requisito), inclusive
-em schemas com dezenas de tabelas e múltiplos relacionamentos.
+**Performance Goals**: Graph redraw perceptibly instantaneous on every
+command (reference: under ~100ms), keeping the standard already required by the
+constitution (Principle V — Perceived Speed as a Requirement), including
+on schemas with dozens of tables and multiple relationships.
 
-**Constraints**: Sem novas dependências; sem criar ou expandir testes
-automatizados; sem alterar comandos, parsing, export de DDL ou persistência;
-sem criar pastas fora da estrutura existente (`lib/src/components/editor/components/table/`);
-schemas sem conflito de roteamento devem continuar sendo desenhados
-exatamente como hoje (FR-006); garantia de zero cruzamento deve valer sempre,
-mesmo que isso exija aumentar o espaçamento entre tabelas (ver Clarifications
-do spec).
+**Constraints**: No new dependencies; do not create or expand automated
+tests; do not change commands, parsing, DDL export, or persistence;
+do not create folders outside the existing structure (`lib/src/components/editor/components/table/`);
+schemas with no routing conflict must continue to be drawn
+exactly as today (FR-006); zero-crossing guarantee must always hold,
+even if that requires increasing spacing between tables (see Clarifications
+in the spec).
 
-**Scale/Scope**: Schemas com 4 ou mais tabelas e relacionamentos cruzados
-(caso mínimo de reprodução da issue) até dezenas de tabelas com múltiplos
-relacionamentos concorrentes no mesmo corredor, incluindo auto-relacionamento.
+**Scale/Scope**: Schemas with 4 or more tables and crossed relationships
+(minimum reproduction case from the issue) up to dozens of tables with multiple
+concurrent relationships in the same corridor, including self-relationship.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| Princípio | Avaliação |
+| Principle | Assessment |
 |---|---|
-| I. Interface a Serviço da Decisão | PASS — a correção existe exatamente para que o grafo volte a comunicar o estado real do schema (linhas e setas corretas); não introduz nenhum elemento decorativo novo. |
-| II. Comandos que Falam SQL | N/A — nenhum comando é criado, alterado ou removido por esta correção. |
-| III. Resultado Portável, Nunca Aprisionado | N/A — não altera export de DDL nem o formato dos arquivos de projeto (FR-007, FR-008). |
-| IV. Terminal do Início ao Fim | PASS — a correção é puramente visual dentro do TUI existente; não introduz interação por mouse nem depende de ferramenta externa. |
-| V. Velocidade Percebida como Requisito | PASS COM ATENÇÃO — o roteamento consciente de obstáculos adiciona trabalho por relação (checar obstáculos, alocar pistas). Mantido simples (varredura linear sobre tabelas e corredores, sem busca de caminho genérica tipo A*) para preservar resposta instantânea em dezenas de tabelas, conforme FR-005. Deve ser revalidado manualmente com um schema grande no quickstart. |
-| VI. Confiança Desde o Primeiro Comando | PASS — melhora a confiabilidade do feedback visual do grafo, que é redesenhado a cada comando; não muda o fluxo de salvamento automático nem o suporte aos três engines. |
-| VII. Simplicidade Deliberada | PASS COM JUSTIFICATIVA — a alocação de pistas e o aumento pontual de espaçamento são a forma mais direta de cumprir a garantia de zero cruzamento exigida na spec (Clarifications); não é complexidade especulativa, é requisito explícito do usuário. Nenhuma abstração extra (ex.: motor de grafo genérico) é introduzida além do necessário. |
-| VIII. Estabilidade do que Já Existe | PASS — FR-006 exige que schemas sem conflito de roteamento continuem exatamente iguais a hoje; a mudança é aditiva (nova etapa de roteamento), não reescreve `GraphLayoutEngine` nem o formato de projeto salvo. |
+| I. Interface in Service of the Decision | PASS — the fix exists exactly so the graph again communicates the real schema state (correct lines and arrows); it introduces no new decorative element. |
+| II. Commands that Speak SQL | N/A — no command is created, changed, or removed by this fix. |
+| III. Portable Result, Never Locked In | N/A — does not change DDL export or project file format (FR-007, FR-008). |
+| IV. Terminal End to End | PASS — the fix is purely visual inside the existing TUI; it introduces no mouse interaction and depends on no external tool. |
+| V. Perceived Speed as a Requirement | PASS WITH ATTENTION — obstacle-aware routing adds work per relation (check obstacles, allocate lanes). Kept simple (linear scan over tables and corridors, no generic path search like A*) to preserve instantaneous response on dozens of tables, per FR-005. Must be revalidated manually with a large schema in the quickstart. |
+| VI. Trust from the First Command | PASS — improves reliability of the graph's visual feedback, which is redrawn on every command; does not change the auto-save flow or support for the three engines. |
+| VII. Deliberate Simplicity | PASS WITH JUSTIFICATION — lane allocation and pointed spacing increase are the most direct way to meet the zero-crossing guarantee required in the spec (Clarifications); this is not speculative complexity, it is an explicit user requirement. No extra abstraction (e.g. generic graph engine) is introduced beyond what is needed. |
+| VIII. Stability of What Already Exists | PASS — FR-006 requires schemas with no routing conflict to remain exactly the same as today; the change is additive (new routing step), does not rewrite `GraphLayoutEngine` or the saved project format. |
 
-Nenhuma violação sem justificativa. Nenhuma entrada necessária em
+No unjustified violations. No entry needed in
 "Complexity Tracking".
 
-**Reavaliação pós-Fase 1**: `research.md` e `data-model.md` confirmam que a
-abordagem continua uma varredura linear sobre obstáculos e corredores (sem
-pathfinding genérico) e que nenhuma entidade nova é persistida — apenas
-estruturas internas de renderização. Os status PASS e PASS COM
-ATENÇÃO/JUSTIFICATIVA acima permanecem válidos; nenhum princípio muda de
-avaliação após o design detalhado.
+**Post–Phase 1 re-evaluation**: `research.md` and `data-model.md` confirm that the
+approach remains a linear scan over obstacles and corridors (no
+generic pathfinding) and that no new entity is persisted — only
+internal rendering structures. The PASS and PASS WITH
+ATTENTION/JUSTIFICATION statuses above remain valid; no principle changes
+assessment after detailed design.
 
 ## Project Structure
 
@@ -117,9 +117,9 @@ specs/001-fix-graph-relation-lines/
 └── tasks.md              # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
-Não há `contracts/`: esta correção não expõe nenhuma interface pública nova
-(API, comando ou formato de arquivo); é um ajuste interno de renderização do
-grafo no editor.
+There is no `contracts/`: this fix exposes no new public interface
+(API, command, or file format); it is an internal adjustment to graph
+rendering in the editor.
 
 ### Source Code (repository root)
 
@@ -127,22 +127,22 @@ grafo no editor.
 lib/src/components/editor/
 ├── components/
 │   └── table/
-│       ├── graph_layout.dart      # já existe — distribuição de tabelas em linhas/colunas (NÃO alterado em sua API pública)
-│       ├── graph_routing.dart     # NOVO — obstáculos, decisão de lado, alocação de pistas e ajuste de espaçamento
-│       └── table_component.dart   # já existe — passa a consumir graph_routing.dart para desenhar linhas/setas
+│       ├── graph_layout.dart      # already exists — table distribution into rows/columns (NOT changed in its public API)
+│       ├── graph_routing.dart     # NEW — obstacles, side decision, lane allocation, and spacing adjustment
+│       └── table_component.dart   # already exists — starts consuming graph_routing.dart to draw lines/arrows
 └── models/
-    └── graph_model.dart           # já existe — pode ganhar campos auxiliares (ex.: pista alocada) sem quebrar o formato de SchemaState persistido
+    └── graph_model.dart           # already exists — may gain helper fields (e.g. allocated lane) without breaking the persisted SchemaState format
 ```
 
-**Structure Decision**: Single project (Dart TUI). A correção fica inteiramente
-dentro de `lib/src/components/editor/components/table/`, a mesma pasta onde o
-bug foi localizado, adicionando um novo módulo auxiliar (`graph_routing.dart`)
-em vez de inflar `table_component.dart` ou `graph_layout.dart` com
-responsabilidades adicionais. Nenhuma pasta nova é criada, conforme a
-restrição de escopo do spec.
+**Structure Decision**: Single project (Dart TUI). The fix lives entirely
+inside `lib/src/components/editor/components/table/`, the same folder where the
+bug was located, adding a new helper module (`graph_routing.dart`)
+instead of inflating `table_component.dart` or `graph_layout.dart` with
+additional responsibilities. No new folder is created, per the
+spec scope constraint.
 
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-Nenhuma violação do Constitution Check exige entrada nesta tabela.
+No Constitution Check violation requires an entry in this table.

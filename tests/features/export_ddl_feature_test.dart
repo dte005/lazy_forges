@@ -1,6 +1,6 @@
-// Testes de funcionalidade: exportação do DDL SQL para cada engine. Usa um
-// diretório temporário isolado via `IOOverrides` para nunca escrever no
-// repositório.
+// Feature tests: SQL DDL export for each engine. Uses a
+// temporary directory isolado via `IOOverrides` para never escrever no
+// repository.
 import 'dart:io';
 
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
@@ -8,8 +8,8 @@ import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart'
 import 'package:lazy_forge/src/services/storage/project_storage.dart';
 import 'package:test/test.dart';
 
-/// Roda [body] com `Directory.current` apontando para um diretório temporário
-/// isolado, garantindo que nada seja escrito no repositório real.
+/// Roda [body] with `Directory.current` apontando para um temporary directory
+/// isolado, garantindo que nada seja escrito in the repository real.
 Future<T> _withTempCwd<T>(Future<T> Function(Directory tmp) body) async {
   final tmp = Directory.systemTemp.createTempSync('lazy_forge_export_test_');
   try {

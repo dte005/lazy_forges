@@ -1,4 +1,4 @@
-// Testes de funcionalidade: troca de engine de banco, "show database" e
+// Testes de feature: troca de database engine, "show database" e
 // "show types".
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart';

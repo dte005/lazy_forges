@@ -1,110 +1,109 @@
 ---
 name: Feature
-about: Propor uma nova funcionalidade ou melhoria para o LazyForge
+about: Propose a new feature or improvement for LazyForge
 title: '[feature] '
 labels: enhancement
 assignees: ''
 ---
 
 <!--
-Título: [feature] + verbo no infinitivo + o que muda. Ex.: [feature] Desenvolver tecla 'q' para sair
-Esta issue é a fonte de verdade para um agente de IA criar a spec, o plan, as tasks e implementar.
-Preencha as seções acima da linha "Diretivas para o agente" de forma autossuficiente: quem ler
-só esta issue deve entender o pedido sem consultar mais nada. Não edite as diretivas.
-Toda funcionalidade deve resolver um problema concreto de usabilidade; pedidos vagos não são aceitos.
+Title: [feature] + infinitive verb + what changes. Ex.: [feature] Add 'q' key to quit
+This issue is the source of truth for an AI agent to create the spec, plan, tasks, and implementation.
+Fill in the sections above the "Agent directives" line so they are self-contained: anyone reading
+only this issue should understand the request without looking elsewhere. Do not edit the directives.
+Every feature must solve a concrete usability problem; vague requests are not accepted.
 -->
 
-## Problema de usabilidade
-<!-- Quem sofre, em que situação e qual o efeito concreto ao modelar schemas no terminal. -->
+## Usability problem
+<!-- Who is affected, in what situation, and what concrete effect it has when modeling schemas in the terminal. -->
 
-## Comportamento atual
-<!-- O que o app faz hoje nessa situação. Cite arquivo e função quando souber
-     (ex.: _handleDeleteTable em lib/src/components/editor/providers/commands_provider.dart). -->
+## Current behavior
+<!-- What the app does today in this situation. Cite file and function when known
+     (e.g. _handleDeleteTable in lib/src/components/editor/providers/commands_provider.dart). -->
 
-## Solução desejada
-<!-- O que deve passar a acontecer. Se envolver comando, informe a sintaxe e a mensagem exibida. -->
+## Desired solution
+<!-- What should happen instead. If it involves a command, state the syntax and the message shown. -->
 
-**Sintaxe proposta (se houver comando):**
+**Proposed syntax (if there is a command):**
 ```
 ```
 
-## Critérios de aceite
-<!-- Verificáveis, em formato Given/When/Then. -->
+## Acceptance criteria
+<!-- Verifiable, in Given/When/Then format. -->
 - [ ] Given ..., When ..., Then ...
 - [ ] Given ..., When ..., Then ...
 
-## Impacto no comportamento atual
-<!-- Marque uma opção. -->
-- [ ] Aditivo: não altera nada que já funciona hoje
-- [ ] Muda comportamento já liberado (justifique abaixo por que a mudança é aceitável)
+## Impact on current behavior
+<!-- Check one option. -->
+- [ ] Additive: does not change anything that already works today
+- [ ] Changes already shipped behavior (justify below why the change is acceptable)
 
-**Justificativa (se muda comportamento):**
+**Justification (if behavior changes):**
 
-## Bancos afetados
+## Affected databases
 - [ ] PostgreSQL
 - [ ] MySQL
 - [ ] SQLite
-- [ ] Todos / não se aplica
+- [ ] All / not applicable
 
-## Fora de escopo
-<!-- O que NÃO deve ser alterado nesta issue. -->
+## Out of scope
+<!-- What must NOT be changed in this issue. -->
 
-## Como validar manualmente
-<!-- O projeto não exige testes automatizados. Passos que o mantenedor executa no app. -->
+## How to validate manually
+<!-- The project does not require automated tests. Steps the maintainer runs in the app. -->
 1.
 2.
 
-## Alternativas consideradas
-<!-- Escreva N/A se não houver. -->
+## Alternatives considered
+<!-- Write N/A if none. -->
 
-## Contexto adicional
-<!-- Prints, links, issues relacionadas. Escreva N/A se não houver. -->
+## Additional context
+<!-- Screenshots, links, related issues. Write N/A if none. -->
 
 ---
 
-## Diretivas para o agente de IA (não editar)
+## Agent directives (do not edit)
 
-Esta issue é o ponto de partida. A versão alvo é a do **milestone** desta issue.
+This issue is the starting point. The target version is this issue's **milestone**.
 
-**1. Leia antes de agir**
-- Esta issue inteira (`gh issue view <número>`).
-- `.specify/memory/constitution.md` (constituição; precedência máxima sobre práticas informais).
-- `AGENTS.md` (convenções do projeto).
-- `specs/002-v0-1-baseline/spec.md` e `plan.md` (baseline do que já está liberado; **somente leitura**).
-- O código existente em `lib/` é a fonte da verdade sobre o comportamento e a organização atuais. Se a
-  baseline, a constituição ou o `AGENTS.md` divergirem do código, vale o código: avise o mantenedor.
+**1. Read before acting**
+- This entire issue (`gh issue view <number>`).
+- `.specify/memory/constitution.md` (constitution; highest precedence over informal practices).
+- `.github/copilot-instructions.md` (operational guidance and skills).
+- Existing code under `lib/` is the source of truth for current behavior and layout. If the
+  constitution or `copilot-instructions.md` diverge from the code, the code wins: notify the maintainer.
 
-**2. Fluxo Spec Kit (nesta ordem, comandos com hífen)**
-1. `/speckit-specify` usando o conteúdo desta issue como descrição da feature.
-   - A spec nasce com `Status: Planned` e a linha `Source issue: #<número>`.
-   - Declara que estende a baseline `002-v0-1-baseline` e não altera comportamento fora do escopo.
-2. `/speckit-clarify` somente se restar ambiguidade real; prefira registrar a decisão a perguntar o óbvio.
-3. `/speckit-plan` seguindo a organização real do código e o Constitution Check.
-4. `/speckit-tasks` com tarefas pequenas, ordenadas e só do escopo desta issue.
-5. `/speckit-analyze` (somente leitura) e corrija inconsistências na documentação.
-6. `/speckit-implement` apenas se a spec estiver `Planned` e o Constitution Check estiver PASS.
+**2. Spec Kit flow (in this order; hyphenated commands)**
+1. `/speckit-specify` using this issue's content as the feature description.
+   - The spec starts with `Status: Planned` and the line `Source issue: #<number>`.
+   - It states what is already shipped in code and does not change out-of-scope behavior.
+2. `/speckit-clarify` only if real ambiguity remains; prefer recording the decision over asking the obvious.
+3. `/speckit-plan` following the real code layout and the Constitution Check.
+4. `/speckit-tasks` with small, ordered tasks limited to this issue's scope.
+5. `/speckit-analyze` (read-only) and fix inconsistencies in the documentation.
+6. `/speckit-implement` only if the spec is `Planned` and the Constitution Check is PASS.
 
-**3. Restrições obrigatórias**
-- Não alterar `specs/001-*` nem `specs/002-*`, e não mudar comportamento liberado fora do escopo desta issue.
-- Se esta issue marcar "Muda comportamento", a spec deve registrar a justificativa e a mudança deve ser
-  exatamente a descrita.
-- Manter a leitura de projetos JSON já salvos em `lazyforge_projects/` (campos novos são opcionais).
-- Respeitar a organização de pastas existente em `lib/src/`; parsing de comandos fora dos componentes de UI;
-  usar `ColumnDef`, nunca `Column`; sem `index.dart`.
-- Confirmar a API do `nocterm` no código instalado localmente antes de usá-la. Não presumir de memória.
-- Para encerrar o app, usar `shutdownApp()` do nocterm, nunca `exit(0)`.
-- Não adicionar dependência ao `pubspec.yaml` sem perguntar ao mantenedor.
-- Não criar nem expandir testes automatizados (a constituição não os exige).
-- Mensagens ao usuário em português, claras e acionáveis; nunca expor stack trace.
-- Funcionalidade nova ou tela nova deve oferecer a tecla `q` para sair.
-- Simplicidade: nada de abstração "para o futuro".
+**3. Mandatory constraints**
+- Do not change `specs/001-*`, and do not change shipped behavior outside this issue's scope.
+- If this issue marks "Changes already shipped behavior", the spec must record the justification and the
+  change must match exactly what is described.
+- Keep reading already-saved JSON projects in `lazyforge_projects/` (new fields are optional).
+- Respect the existing folder layout under `lib/src/`; command parsing outside UI components;
+  use `ColumnDef`, never `Column`; no `index.dart`.
+- Confirm the `nocterm` API in the locally installed code before using it. Do not assume from memory.
+- To quit the app, use nocterm's `shutdownApp()`, never `exit(0)`.
+- Do not add a dependency to `pubspec.yaml` without asking the maintainer.
+- Do not create or expand automated tests (the constitution does not require them).
+- User-facing messages in Portuguese, clear and actionable; never expose stack traces.
+- New features or screens must offer the `q` key to quit.
+- Simplicity: no abstraction "for the future".
 
-**4. Entrega**
-- Trabalhe em uma branch própria, nunca direto na `master`.
-- Não faça commit, push nem abra PR sem confirmação do mantenedor. O PR deve conter `Closes #<número>`.
-- Atualize `README.md` se comandos ou comportamento visíveis mudarem.
-- Ao concluir e validar manualmente, mude o status da spec para `Implemented`.
-- Se a `version` do `pubspec.yaml` e o `CHANGELOG.md` não corresponderem ao milestone desta issue, pergunte ao
-  mantenedor antes de alterá-los.
+**4. Delivery**
+- Work on your own branch, never directly on `master`.
+- Do not commit, push, or open a PR without maintainer confirmation. The PR must include `Closes #<number>`.
+- Update `README.md` if visible commands or behavior change.
+- When done and manually validated, set the spec status to `Implemented`.
+- If `pubspec.yaml` `version` and `CHANGELOG.md` do not match this issue's milestone, ask the
+  maintainer before changing them.
 
-**5. Referências do Spec Kit**: skills em `.github/skills/speckit-*/SKILL.md` e templates em `.specify/templates/`.
+**5. Spec Kit references**: skills under `.github/skills/speckit-*/SKILL.md` and templates under `.specify/templates/`.

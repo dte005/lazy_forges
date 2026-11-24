@@ -1,105 +1,105 @@
-# Data Model: Corrigir linhas de relacionamento transpassando tabelas no grafo
+# Data Model: Fix relationship lines crossing tables in the graph
 
 **Feature**: [spec.md](./spec.md) | **Research**: [research.md](./research.md)
 
-Este documento descreve as entidades conceituais envolvidas no roteamento do
-grafo. São estruturas internas de renderização (não persistidas, recalculadas
-a cada desenho a partir do `SchemaState` já existente) — não alteram o
-formato dos projetos salvos em `lazyforge_projects/` (FR-007).
+This document describes the conceptual entities involved in graph
+routing. They are internal rendering structures (not persisted, recalculated
+on every draw from the existing `SchemaState`) — they do not change the
+format of projects saved in `lazyforge_projects/` (FR-007).
 
 ## TableObstacle
 
-Representa o retângulo ocupado por uma tabela já posicionada, usado para
-impedir que qualquer segmento de relação o atravesse.
+Represents the rectangle occupied by an already positioned table, used to
+prevent any relation segment from crossing it.
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `tableKey` | String | Nome da tabela em minúsculas (chave de identidade) |
-| `x`, `y` | int | Canto superior esquerdo no canvas de texto |
-| `width`, `height` | int | Dimensões do retângulo (iguais às já calculadas hoje em `_TableNodeLayout`) |
+| `tableKey` | String | Table name in lowercase (identity key) |
+| `x`, `y` | int | Top-left corner on the text canvas |
+| `width`, `height` | int | Rectangle dimensions (same as already computed today in `_TableNodeLayout`) |
 
-**Regra de validação**: nenhum segmento de uma relação cujo `sourceTable` e
-`targetTable` sejam diferentes deste `tableKey` pode ocupar uma célula dentro
-deste retângulo (incluindo a borda). Para a própria origem/destino da
-relação, apenas o ponto de saída/entrada (na borda) é permitido.
+**Validation rule**: no segment of a relation whose `sourceTable` and
+`targetTable` differ from this `tableKey` may occupy a cell inside
+this rectangle (including the border). For the relation's own source/target,
+only the exit/entry point (on the border) is allowed.
 
-## RoutingCorridor (Pista/Corredor)
+## RoutingCorridor (Lane/Corridor)
 
-Representa o espaço livre entre duas tabelas (ou duas linhas de tabelas)
-através do qual relações podem passar.
+Represents the free space between two tables (or two table rows)
+through which relations may pass.
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `orientation` | enum: `horizontal` \| `vertical` | Se o corredor corre entre colunas (`colGap`) ou entre linhas (`rowGap`) |
-| `position` | int | Coordenada fixa do corredor (ex.: a linha Y do `rowGap`, ou a faixa X do `colGap`) |
-| `availableSpan` | int | Largura/altura disponível hoje (`colGap = 8` ou `rowGap = 3`, podendo crescer pela Decisão 4) |
-| `allocatedLanes` | List\<RoutingLaneAssignment\> | Pistas já atribuídas dentro deste corredor, em ordem de alocação |
+| `orientation` | enum: `horizontal` \| `vertical` | Whether the corridor runs between columns (`colGap`) or between rows (`rowGap`) |
+| `position` | int | Fixed coordinate of the corridor (e.g. the Y line of `rowGap`, or the X band of `colGap`) |
+| `availableSpan` | int | Width/height available today (`colGap = 8` or `rowGap = 3`, may grow per Decision 4) |
+| `allocatedLanes` | List\<RoutingLaneAssignment\> | Lanes already assigned within this corridor, in allocation order |
 
-**Regra de validação**: `allocatedLanes.length` nunca excede o número de
-pistas que cabem em `availableSpan` com espaçamento legível entre elas; se
-excederia, `availableSpan` é aumentado antes de alocar a nova pista (nunca o
-inverso).
+**Validation rule**: `allocatedLanes.length` never exceeds the number of
+lanes that fit in `availableSpan` with readable spacing between them; if it
+would exceed, `availableSpan` is increased before allocating the new lane (never the
+reverse).
 
 ## RoutingLaneAssignment
 
-Associa uma relação específica a uma posição (offset) dentro de um
+Associates a specific relation with a position (offset) inside a
 `RoutingCorridor`.
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `edgeIndex` | int | Índice da relação em `GraphLayoutResult.edges`, usado como identidade estável |
-| `offset` | int | Deslocamento dentro do corredor (0 = posição central/padrão, 1, 2, ... para pistas adicionais) |
+| `edgeIndex` | int | Relation index in `GraphLayoutResult.edges`, used as stable identity |
+| `offset` | int | Displacement within the corridor (0 = center/default position, 1, 2, ... for additional lanes) |
 
-**Regra de validação**: dentro do mesmo `RoutingCorridor`, cada `edgeIndex`
-tem um `offset` único; a ordem de alocação segue a ordem de `edgeIndex`
-(determinística entre redesenhos idênticos do mesmo schema).
+**Validation rule**: within the same `RoutingCorridor`, each `edgeIndex`
+has a unique `offset`; allocation order follows `edgeIndex` order
+(deterministic across identical redraws of the same schema).
 
 ## RoutedEdge
 
-Resultado final do roteamento de uma `GraphRelationEdge` existente (de
-`graph_model.dart`), pronto para ser desenhado por `table_component.dart`.
+Final routing result for an existing `GraphRelationEdge` (from
+`graph_model.dart`), ready to be drawn by `table_component.dart`.
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `edge` | GraphRelationEdge | Referência à relação original (origem/destino/colunas) |
-| `segments` | List\<RoutedSegment\> | Lista ordenada de trechos horizontais/verticais que formam o caminho completo, já livres de colisão com obstáculos |
-| `arrowPoint` | (x: int, y: int, direction: enum `up`\|`down`\|`left`\|`right`) | Ponto onde a seta é desenhada, sempre adjacente ao lado da tabela de destino por onde o último segmento chega |
-| `color` | Color | Cor já atribuída hoje por relação (paleta existente, inalterada) |
+| `edge` | GraphRelationEdge | Reference to the original relation (source/target/columns) |
+| `segments` | List\<RoutedSegment\> | Ordered list of horizontal/vertical segments forming the full path, already free of obstacle collision |
+| `arrowPoint` | (x: int, y: int, direction: enum `up`\|`down`\|`left`\|`right`) | Point where the arrow is drawn, always adjacent to the side of the target table where the last segment arrives |
+| `color` | Color | Color already assigned today per relation (existing palette, unchanged) |
 
 ### RoutedSegment
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `orientation` | enum: `horizontal` \| `vertical` | Direção do trecho |
-| `start`, `end` | (x: int, y: int) | Extremidades do trecho no canvas |
+| `orientation` | enum: `horizontal` \| `vertical` | Segment direction |
+| `start`, `end` | (x: int, y: int) | Segment endpoints on the canvas |
 
-**Regra de validação**: a concatenação de `segments`, na ordem da lista,
-MUST formar um caminho contínuo (o fim de um trecho coincide com o início do
-próximo) do ponto de saída da tabela de origem até o `arrowPoint` na tabela
-de destino, sem nenhum ponto intermediário dentro de um `TableObstacle` que
-não seja a origem ou o destino.
+**Validation rule**: the concatenation of `segments`, in list order,
+MUST form a continuous path (the end of one segment coincides with the start of the
+next) from the exit point of the source table to the `arrowPoint` on the
+target table, with no intermediate point inside a `TableObstacle` that
+is not the source or target.
 
-## Relação com entidades existentes
+## Relation to existing entities
 
-- `TableDef`, `ColumnDef`, `ForeignKeyDef` (`schema_model.dart`): não são
-  alteradas; continuam sendo a fonte de verdade do schema.
-- `GraphRelationEdge`, `GraphLayoutResult` (`graph_model.dart`): continuam
-  representando, respectivamente, uma relação a desenhar e o resultado da
-  distribuição em linhas/colunas; `GraphLayoutResult` pode, se necessário,
-  ganhar o espaçamento (`colGap`/`rowGap`) ajustado pela Decisão 4 como campo
-  adicional, sem remover nenhum campo existente.
-- `_TableNodeLayout` (interno a `table_component.dart`): continua
-  representando a posição final de cada tabela no canvas; é a fonte dos
-  `TableObstacle` consumidos pelo novo módulo de roteamento.
+- `TableDef`, `ColumnDef`, `ForeignKeyDef` (`schema_model.dart`): are not
+  changed; they remain the schema source of truth.
+- `GraphRelationEdge`, `GraphLayoutResult` (`graph_model.dart`): continue
+  representing, respectively, a relation to draw and the result of
+  distribution into rows/columns; `GraphLayoutResult` may, if needed,
+  gain spacing (`colGap`/`rowGap`) adjusted by Decision 4 as an additional
+  field, without removing any existing field.
+- `_TableNodeLayout` (internal to `table_component.dart`): continues
+  representing each table's final position on the canvas; it is the source of
+  `TableObstacle`s consumed by the new routing module.
 
-## Casos especiais cobertos pelo modelo
+## Special cases covered by the model
 
-- **Auto-relacionamento** (origem = destino): representado como um
-  `RoutedEdge` cujo primeiro e último segmento saem/entram pela mesma tabela,
-  por lados diferentes, sem nenhum `TableObstacle` de outra tabela
-  necessariamente envolvido — mas ainda validado contra todas as outras
-  tabelas, caso o laço precise contornar vizinhos próximos.
-- **Múltiplas FKs entre o mesmo par de tabelas**: cada FK gera um
-  `GraphRelationEdge` e, portanto, um `RoutedEdge` independente; se os
-  caminhos calculados coincidirem no mesmo corredor, a alocação de pistas
-  (Decisão 3) garante offsets distintos.
+- **Self-relationship** (source = target): represented as a
+  `RoutedEdge` whose first and last segment exit/enter the same table,
+  on different sides, without any other table's `TableObstacle`
+  necessarily involved — but still validated against all other
+  tables, in case the loop needs to go around nearby neighbors.
+- **Multiple FKs between the same pair of tables**: each FK yields a
+  `GraphRelationEdge` and therefore an independent `RoutedEdge`; if the
+  computed paths coincide in the same corridor, lane allocation
+  (Decision 3) guarantees distinct offsets.

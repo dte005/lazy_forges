@@ -1,199 +1,175 @@
 <!--
 Sync Impact Report
-- Version change: 2.0.0 → 2.0.0 (constituição 2.0.0 ainda não commitada neste
-  repositório; esta emenda é aplicada sobre o rascunho em working tree, sem
-  bump de versão além de atualizar a data de última emenda, conforme
-  instrução explícita do usuário).
-- Princípio adicionado: VIII. Estabilidade do que Já Existe (NON-NEGOTIABLE).
-- Princípio modificado: VII. Simplicidade e Respeito ao que Já Funciona → VII.
-  Simplicidade Deliberada — a parte sobre "respeito ao que já foi entregue /
-  não mudar comportamento liberado sem justificativa" foi fundida e movida
-  para o novo princípio VIII, para não haver duplicidade; o princípio VII
-  manteve apenas a regra de simplicidade.
-- Seção modificada: "Como Avaliar uma Proposta" — adicionada a pergunta 7
-  sobre preservação integral do comportamento em produção.
-- Seções removidas: nenhuma.
-- Correção clerical (sem impacto de versão): as duas referências a um arquivo
-  `AGENTS.md` (que não existe no repositório) foram corrigidas para apontar
-  ao arquivo real de orientação operacional, `.github/docs/context-tech.md`,
-  identificado como inconsistência (finding I2) na análise do
-  `/speckit-analyze` da spec 001-fix-graph-relation-lines.
-- Follow-up TODOs: TODO(ESCOPO_SUPORTE_MULTIUSUARIO) mantido sem alteração
-  (ver seção "O que o LazyForge Não É").
-- Templates dependentes (plan/spec/tasks) leem este arquivo em tempo de
-  execução e não foram alterados nesta corrida, conforme o escopo do skill.
+- Version change: 2.0.0 → 2.0.0 (documentation language only: full body
+  translated Portuguese → English; no principle meaning change).
+- Clerical: all project Spec Kit / agent docs standardized on English.
+- Operational guidance remains `.github/copilot-instructions.md`.
+- Follow-up TODOs: TODO(MULTI_USER_SCOPE) unchanged (see "What LazyForge Is Not").
 -->
 
 # LazyForge Constitution
 
-## Propósito e Público
+## Purpose and audience
 
-O LazyForge é uma IDE de terminal (TUI), operada pelo teclado, para modelar
-schemas de banco de dados relacional (PostgreSQL, MySQL e SQLite) e exportar o
-DDL SQL correspondente. É inspirado no espírito do LazyGit e do LazyVim:
-ferramentas de terminal rápidas, memorizáveis, que o desenvolvedor não quer
-abandonar. O projeto já está em produção, publicado no pub.dev; o que existe
-hoje é a base sobre a qual tudo evolui.
+LazyForge is a keyboard-driven terminal IDE (TUI) for modeling relational
+database schemas (PostgreSQL, MySQL, and SQLite) and exporting the matching
+SQL DDL. It is inspired by LazyGit and LazyVim: fast, memorable terminal
+tools developers do not want to leave. The project is already in production on
+pub.dev; what ships today is the base everything builds on.
 
-O usuário é o desenvolvedor que já vive no terminal e não quer trocar de
-interface — navegador, app desktop, diagramador visual — só para desenhar um
-schema. O problema que o LazyForge resolve é permitir que esse usuário vá de
-uma ideia de modelo a um DDL pronto sem sair do terminal.
+The user is a developer who already lives in the terminal and does not want to
+switch UI — browser, desktop app, visual diagrammer — only to design a schema.
+LazyForge lets that user go from a model idea to ready DDL without leaving the
+terminal.
 
-Esta constituição é o documento contra o qual toda spec, plano, tarefa e
-implementação futuras são avaliadas. Ela não trata de linguagem, framework,
-estrutura de pastas ou convenções de código — isso é orientação operacional e
-vive em `.github/docs/context-tech.md`. Aqui vivem os valores, os princípios de produto e os
-critérios que decidem se uma ideia de funcionalidade pertence ao LazyForge.
+This constitution is the document against which every future spec, plan, task,
+and implementation is judged. It does not cover language, framework, folder
+layout, or coding conventions — that operational guidance lives in
+`.github/copilot-instructions.md`. Here live product values, principles, and
+the criteria that decide whether a feature idea belongs in LazyForge.
+
+## Language of project artifacts
+
+All Spec Kit artifacts (`specs/**`, constitution amendments, plans, tasks,
+checklists), GitHub issue agent directives, Copilot instructions, and agent
+definitions **MUST** be written in **English**. All source comments and doc
+comments (`//`, `///`) in application and test code **MUST** be in **English**.
+End-user UI strings shown inside the running TUI remain in **Portuguese**
+(clear, actionable; never raw stack traces).
 
 ## Core Principles
 
-### I. Interface a Serviço da Decisão
-Cada elemento na tela DEVE existir para comunicar um estado ou ajudar o usuário
-a tomar uma decisão. Elementos puramente decorativos, ruído visual, ou
-informação redundante DEVEM ser removidos. Toda ação do usuário DEVE produzir
-feedback imediato e inequívoco. Toda mensagem de erro DEVE ser escrita em
-linguagem humana, clara e acionável — nunca stack trace ou exceção bruta.
-Justificativa: numa ferramenta de produtividade usada repetidamente, cada
-elemento sem propósito funcional é custo cognitivo pago a cada sessão de uso.
+### I. Interface in service of decisions
+Every on-screen element MUST exist to communicate state or help the user decide.
+Purely decorative elements, visual noise, or redundant information MUST be
+removed. Every user action MUST produce immediate, unambiguous feedback. Every
+error message MUST be human language, clear and actionable — never a stack
+trace or raw exception.
+Rationale: in a productivity tool used repeatedly, every non-functional element
+is cognitive cost paid every session.
 
-### II. Comandos que Falam SQL
-A linguagem de comandos DEVE soar familiar para quem já conhece SQL (por
-exemplo, criar/alterar/remover tabelas e colunas, renomear, declarar chaves
-estrangeiras). Um usuário experiente em SQL DEVE conseguir adivinhar a forma de
-um comando novo sem consultar documentação. A gramática DEVE ser consistente:
-um comando novo NUNCA deve contradizer o padrão estabelecido por comandos
-anteriores. Atalhos e sinônimos SÃO permitidos quando reduzem esforço, desde
-que não introduzam ambiguidade sobre qual ação será executada.
-Justificativa: a familiaridade com SQL é o atalho mental que o usuário já tem;
-desperdiçá-la com uma sintaxe própria e arbitrária anula a vantagem de ser uma
-ferramenta "para quem já pensa em SQL".
+### II. Commands that speak SQL
+The command language MUST feel familiar to anyone who already knows SQL (for
+example create/alter/drop tables and columns, rename, declare foreign keys). An
+experienced SQL user MUST be able to guess a new command’s shape without
+reading docs. Grammar MUST stay consistent: a new command MUST NEVER contradict
+the pattern set by earlier commands. Shortcuts and synonyms ARE allowed when
+they reduce effort, as long as they do not make the action ambiguous.
+Rationale: SQL familiarity is mental shortcut the user already has; inventing an
+arbitrary syntax throws away the point of a tool “for people who think in SQL”.
 
-### III. Resultado Portável, Nunca Aprisionado
-O que o LazyForge produz DEVE poder ser usado fora dele. O DDL exportado DEVE
-ser SQL puro e padrão do engine escolhido. Os arquivos de projeto DEVEM
-permanecer arquivos simples e legíveis no diretório de trabalho, versionáveis
-em git. Toda evolução do produto DEVE preferir formatos abertos e legíveis a
-formatos proprietários ou opacos. A direção de produto é buscar integrações
-que levem o resultado do LazyForge para outras ferramentas de apoio ao
-desenvolvimento (migrations, versionamento, outros clientes); isso é direção,
-não uma capacidade já entregue além de exportar SQL e salvar arquivos legíveis.
-Justificativa: um modelador de schema que prende o usuário dentro de si mesmo
-compete com o próprio fluxo de trabalho que deveria servir.
+### III. Portable output, never lock-in
+What LazyForge produces MUST be usable outside it. Exported DDL MUST be pure
+SQL for the chosen engine. Project files MUST stay simple, readable files in
+the working directory, git-friendly. Product evolution MUST prefer open,
+readable formats over proprietary or opaque ones. Product direction includes
+integrations that carry LazyForge output into other dev tools (migrations,
+versioning, other clients); that is direction, not a capability already
+delivered beyond SQL export and readable project files.
+Rationale: a schema modeler that traps the user inside itself fights the
+workflow it should serve.
 
-### IV. Terminal do Início ao Fim
-O teclado DEVE ser o modo primário de operação; nenhum fluxo essencial DEVE
-exigir o mouse. Nenhuma funcionalidade DEVE exigir que o usuário troque de
-contexto (navegador, app externo) para completar uma tarefa de modelagem.
-Toda funcionalidade proposta DEVE declarar, de forma concreta, qual problema
-real de usabilidade ela resolve para quem modela schemas no terminal; ideias
-vagas, genéricas ou justificadas apenas por "pode ser útil algum dia" DEVEM ser
-recusadas.
-Justificativa: o valor do LazyForge é poupar tempo e esforço de quem já vive
-no terminal; qualquer desvio desse compromisso devolve o custo que a ferramenta
-existe para eliminar.
+### IV. Terminal end to end
+The keyboard MUST be the primary mode of operation; no essential flow MUST
+require a mouse. No feature MUST force the user to switch context (browser,
+external app) to finish a modeling task. Every proposed feature MUST state, in
+concrete terms, which real usability problem it solves for people modeling
+schemas in the terminal; vague, generic, or “might be useful someday” ideas
+MUST be rejected.
+Rationale: LazyForge’s value is saving time for people who already live in the
+terminal; any break of that promise returns the cost the tool exists to remove.
 
-### V. Velocidade Percebida como Requisito
-A interface DEVE responder a cada comando de forma perceptivelmente instantânea,
-inclusive com schemas grandes (muitas tabelas e colunas). O grafo de tabelas e
-relacionamentos DEVE refletir o resultado de cada comando imediatamente.
-Performance NÃO é uma otimização a ser feita depois: é um requisito de produto
-avaliado junto com qualquer funcionalidade nova, e uma proposta que arrisque
-travar a interface DEVE ser redesenhada antes de ser aceita.
-Justificativa: a comparação do usuário não é com outro modelador de schema, é
-com a velocidade de digitar um comando no próprio terminal; qualquer lentidão
-perceptível quebra essa expectativa.
+### V. Perceived speed as a requirement
+The UI MUST respond to every command in a way that feels instant, including on
+large schemas (many tables and columns). The table/relationship graph MUST
+reflect each command’s result immediately. Performance is NOT a later
+optimization: it is a product requirement evaluated with any new feature, and a
+proposal that risks freezing the UI MUST be redesigned before acceptance.
+Rationale: the user’s comparison is typing a command in their own terminal, not
+another schema tool; any perceptible lag breaks that expectation.
 
-### VI. Confiança Desde o Primeiro Comando
-A ferramenta DEVE parecer sólida já na primeira execução: tela inicial,
-primeiro comando, primeira mensagem de erro. O trabalho do usuário DEVE ser
-salvo automaticamente e NUNCA deve se perder de forma inesperada. O usuário
-DEVE poder consultar o histórico de comandos e obter ajuda embutida sem sair
-do fluxo. O mesmo modelo mental de comandos DEVE servir igualmente a
-PostgreSQL, MySQL e SQLite — o usuário escolhe o engine e a ferramenta se
-adapta (tipos válidos, DDL correto), sem exigir que ele aprenda um fluxo
-diferente por banco.
-Justificativa: confiança é construída ou destruída nos primeiros segundos de
-uso; e um modelador que trata os três engines como fluxos distintos impõe ao
-usuário uma carga que a ferramenta deveria absorver.
+### VI. Trust from the first command
+The tool MUST feel solid on first run: initial screen, first command, first
+error. User work MUST be saved automatically and MUST NEVER be lost
+unexpectedly. The user MUST be able to inspect command history and get in-app
+help without leaving the flow. The same command mental model MUST work equally
+for PostgreSQL, MySQL, and SQLite — the user picks the engine and the tool
+adapts (valid types, correct DDL) without a different flow per database.
+Rationale: trust is built or destroyed in the first seconds; treating three
+engines as three workflows loads the user with work the tool should absorb.
 
-### VII. Simplicidade Deliberada
-Toda solução DEVE resolver o problema declarado da forma mais direta possível;
-abstrações ou complexidade adicionadas "para o futuro" sem necessidade
-comprovada no presente DEVEM ser recusadas.
-Justificativa: simplicidade mantém o produto rápido de entender e de evoluir.
+### VII. Deliberate simplicity
+Every solution MUST solve the stated problem in the most direct way;
+abstractions or complexity added “for the future” without proven present need
+MUST be refused.
+Rationale: simplicity keeps the product fast to understand and evolve.
 
-### VIII. Estabilidade do que Já Existe (NON-NEGOTIABLE)
-O LazyForge está em produção e há pessoas usando-o hoje. Nenhuma mudança PODE
-causar regressão de comportamento de nenhuma espécie: comandos que funcionam
-hoje DEVEM continuar aceitos, com o mesmo significado e o mesmo resultado; o
-que o usuário já modelou, salvou ou exportou DEVE continuar abrindo e
-produzindo o mesmo resultado; atalhos, interações e fluxos existentes NÃO
-PODEM ser removidos ou alterados silenciosamente. O código liberado é a fonte
-da verdade sobre o que o produto faz; specs, planos e tarefas antigos são só
-histórico e NUNCA são motivo para reescrever ou "corrigir" o que já funciona.
-Mudar ou remover um comportamento existente só é aceitável com uma spec nova
-que declare exatamente essa mudança e justifique o impacto para quem já usa.
-Justificativa: um usuário que confia no comportamento atual não deve ser
-surpreendido por uma mudança não anunciada; sem essa barreira, cada novo ciclo
-de evolução arrisca regredir funcionalidade já validada em produção.
+### VIII. Stability of what already ships (NON-NEGOTIABLE)
+LazyForge is in production and people use it today. No change MAY cause any
+kind of behavior regression: commands that work today MUST keep being accepted
+with the same meaning and result; what the user already modeled, saved, or
+exported MUST keep opening and producing the same result; existing shortcuts,
+interactions, and flows MUST NOT be removed or changed silently. Released code
+is the source of truth for what the product does; old specs, plans, and tasks
+are history only and MUST NEVER justify rewriting or “fixing” what already
+works. Changing or removing existing behavior is only acceptable with a new
+spec that states that change exactly and justifies impact for current users.
+Rationale: users who trust current behavior must not be surprised by unannounced
+change; without this barrier every evolution cycle risks regressing production-
+validated functionality.
 
-## Como Avaliar uma Proposta
+## How to evaluate a proposal
 
-Toda spec, plano ou revisão de funcionalidade DEVE poder responder "sim" às
-perguntas abaixo antes de ser aceita. Uma resposta "não" exige redesenho ou
-recusa da proposta:
+Every feature spec, plan, or review MUST be able to answer “yes” to the
+questions below before acceptance. A “no” requires redesign or rejection:
 
-1. A funcionalidade resolve um problema concreto de usabilidade para quem
-   modela schemas no terminal — e não algo vago ou "pode ser útil um dia"?
-2. O fluxo permanece inteiramente no teclado e no terminal, sem exigir mouse
-   nem troca de contexto para outra ferramenta?
-3. Se envolve comando, sua sintaxe é adivinhável por alguém que já conhece SQL,
-   e é consistente com os comandos que já existem?
-4. O resultado produzido (arquivo de projeto, DDL exportado) continua
-   aproveitável fora do LazyForge, em formato aberto e legível?
-5. A resposta da interface a essa funcionalidade continua perceptivelmente
-   instantânea, mesmo em schemas grandes?
-6. Se a proposta muda comportamento já liberado, ela declara explicitamente o
-   quê muda e por quê — em vez de alterar silenciosamente o que já funciona?
-7. Isso preserva integralmente o comportamento que já está em produção (ou
-   declara e justifica explicitamente a mudança)?
+1. Does the feature solve a concrete usability problem for people modeling
+   schemas in the terminal — not something vague or “maybe useful someday”?
+2. Does the flow stay fully on keyboard and terminal, with no mouse and no
+   context switch to another tool?
+3. If it involves a command, is the syntax guessable for someone who knows SQL
+   and consistent with existing commands?
+4. Does the produced result (project file, exported DDL) remain usable outside
+   LazyForge in an open, readable format?
+5. Does UI response to this feature stay perceptibly instant, even on large
+   schemas?
+6. If the proposal changes released behavior, does it state explicitly what
+   changes and why — instead of silently altering what already works?
+7. Does it fully preserve behavior already in production (or explicitly declare
+   and justify the change)?
 
-## O que o LazyForge Não É
+## What LazyForge is not
 
-- Não é uma ferramenta gráfica ou web de diagramação de schema; é um TUI de
-  terminal.
-- Não executa o DDL contra um banco de dados nem administra conexões ativas;
-  ele modela e exporta SQL, não aplica migrations nem gerencia instâncias.
-- Não é um cliente SQL de uso geral (não roda queries arbitrárias, não navega
-  dados de tabelas existentes); seu escopo é a modelagem do schema e a geração
-  do DDL correspondente.
+- Not a graphical or web schema diagrammer; it is a terminal TUI.
+- It does not execute DDL against a live database or manage active connections;
+  it models and exports SQL, does not apply migrations or manage instances.
+- Not a general-purpose SQL client (no arbitrary queries, no browsing table
+  data); scope is schema modeling and matching DDL generation.
 
-TODO(ESCOPO_SUPORTE_MULTIUSUARIO): não há, hoje, evidência no código ou nos
-documentos do projeto sobre uso colaborativo/multiusuário do mesmo projeto;
-este limite fica propositalmente em aberto até haver uma decisão explícita.
+TODO(MULTI_USER_SCOPE): there is no evidence today in code or project docs of
+collaborative/multi-user use of the same project; this limit stays deliberately
+open until an explicit decision.
 
 ## Governance
 
-Esta constituição tem precedência sobre qualquer prática informal ou
-preferência individual de implementação dentro do LazyForge, e é o documento
-de maior precedência depois do próprio código já liberado em produção.
+This constitution takes precedence over any informal practice or individual
+implementation preference inside LazyForge, and is the highest-precedence
+document after released production code itself.
 
-- **Emendas**: qualquer alteração a esta constituição DEVE ser proposta
-  explicitamente, com justificativa registrada no Sync Impact Report da
-  emenda correspondente. Não há alteração silenciosa de princípio.
-- **Versionamento semântico**: a versão segue MAJOR.MINOR.PATCH — MAJOR para
-  remoção ou redefinição incompatível de princípios (incluindo reescritas
-  completas como esta); MINOR para adição de novo princípio ou expansão
-  material de um princípio existente; PATCH para esclarecimentos e correções
-  de texto sem mudança de sentido.
-- **Conformidade**: toda spec, plano técnico ou revisão de funcionalidade DEVE
-  ser verificada contra os princípios e o checklist desta constituição antes de
-  ser aceita. A ausência dessa verificação é motivo suficiente para recusa.
-- **Relação com outros documentos**: orientação técnica e operacional
-  (linguagem, estrutura de pastas, convenções de código, política de testes,
-  fluxo de desenvolvimento) não pertence a este documento e vive em
-  `.github/docs/context-tech.md`; em caso de conflito, o código liberado prevalece sobre esta
-  constituição, que por sua vez prevalece sobre `.github/docs/context-tech.md`.
+- **Amendments**: any change to this constitution MUST be proposed explicitly,
+  with rationale recorded in that amendment’s Sync Impact Report. No silent
+  principle change.
+- **Semantic versioning**: MAJOR.MINOR.PATCH — MAJOR for removing or
+  incompatibly redefining principles (including full rewrites); MINOR for adding
+  a principle or materially expanding one; PATCH for clarifications and wording
+  fixes with no meaning change.
+- **Compliance**: every feature spec, technical plan, or feature review MUST be
+  checked against these principles and checklist before acceptance. Missing that
+  check is enough grounds for rejection.
+- **Relation to other documents**: technical and operational guidance (language,
+  folder layout, coding conventions, test policy, development flow) does not
+  belong here and lives in `.github/copilot-instructions.md`; on conflict,
+  released code prevails over this constitution, which in turn prevails over
+  `.github/copilot-instructions.md`.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-03 | **Last Amended**: 2026-10-08
+**Version**: 2.0.0 | **Ratified**: 2026-10-03 | **Last Amended**: 2026-11-24

@@ -1,48 +1,48 @@
 ---
 name: Good first issue
-about: Uma tarefa pequena e isolada, ideal para quem está começando a contribuir
+about: A small, self-contained task ideal for first-time contributors
 title: "[good_first_issue]"
 labels: good first issue
 assignees: ''
 
 ---
 
-### Contexto
+### Context
 <!--
-Explique em 2-3 frases ONDE no projeto isso se encaixa e POR QUE é necessário.
-Aponte o(s) arquivo(s) ou pasta(s) relevantes (ex: lib/src/export/, lib/src/ui/).
+Explain in 2–3 sentences WHERE this fits in the project and WHY it is needed.
+Point to the relevant file(s) or folder(s) (e.g. lib/src/export/, lib/src/ui/).
 -->
-Exemplo:
+Example:
 
-O comando export atualmente só suporta CSV. Precisamos adicionar suporte a exportação em formato JSON, seguindo o mesmo padrão usado em lib/src/export/csv_exporter.dart.
+The export command currently only supports CSV. We need to add JSON export support, following the same pattern used in lib/src/export/csv_exporter.dart.
 
-#### Tarefa
+#### Task
 <!--
-Descreva o que precisa ser feito, passo a passo se possível.
-Evite deixar decisões de arquitetura em aberto — se o contribuidor precisa
-decidir "como" fazer algo estrutural, não é mais uma good first issue.
+Describe what needs to be done, step by step if possible.
+Avoid leaving architecture decisions open — if the contributor must decide
+"how" to do something structural, it is no longer a good first issue.
 -->
 
- Passo 1: ...
- Passo 2: ...
- Passo 3: ...
+ Step 1: ...
+ Step 2: ...
+ Step 3: ...
 
-#### Arquivos relevantes
-<!-- Link direto para os arquivos/linhas, se souber -->
+#### Relevant files
+<!-- Direct link to files/lines, if known -->
 
-lib/src/export/csv_exporter.dart (padrão a seguir)
-lib/src/export/export.dart (barrel file, precisa registrar o novo exporter aqui)
+lib/src/export/csv_exporter.dart (pattern to follow)
+lib/src/export/export.dart (barrel file; register the new exporter here)
 
-#### Critério de aceite
-<!-- Como saber que está pronto? -->
+#### Acceptance criteria
+<!-- How to know it is done? -->
 
- Funcionalidade implementada e testada manualmente
- Testes unitários adicionados (se aplicável)
- Documentação/README atualizado (se necessário)
- Segue os padrões de código já estabelecidos no projeto
+ Feature implemented and manually tested
+ Unit tests added (if applicable)
+ Documentation/README updated (if needed)
+ Follows established project code patterns
 
-#### Dificuldade estimada
-<!-- Ajuda o contribuidor a calibrar expectativa -->
-🟢 Fácil (poucas horas) / 🟡 Médio (um final de semana) / 🔴 Requer mais contexto
-Precisa de ajuda?
-Comente aqui ou pergunte antes de começar — sem problema nenhum, é pra isso que o label existe.
+#### Estimated difficulty
+<!-- Helps the contributor set expectations -->
+🟢 Easy (a few hours) / 🟡 Medium (a weekend) / 🔴 Needs more context
+Need help?
+Comment here or ask before you start — no problem at all; that is what this label is for.

@@ -1,7 +1,7 @@
 ## 1.0.1
 
-- Corrige corrupção do terminal ao sair (Ctrl+C, ESC, botão sair):
-  substitui `exit(0)` por `shutdownApp()` do nocterm.
+- Fixes terminal corruption on exit (Ctrl+C, ESC, quit button):
+  replaces `exit(0)` with nocterm's `shutdownApp()`.
 
 ## 1.0.0
 

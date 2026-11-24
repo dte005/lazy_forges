@@ -1,18 +1,18 @@
-/// Roteamento do grafo de relacionamentos: calcula as posições finais das
-/// tabelas (com espaçamento ajustado quando necessário) e o caminho de cada
-/// linha de relacionamento, consciente de obstáculos (outras tabelas) e de
-/// pistas paralelas para relações que compartilham o mesmo corredor.
+/// Relationship graph routing: computes final table positions
+/// (with spacing expanded when needed) and the path of each
+/// relationship line, aware of obstacles (other tables) and of
+/// parallel lanes for relations that share the same corridor.
 ///
-/// Módulo puro (sem dependência do `nocterm`): recebe o resultado do
-/// [GraphLayoutEngine] e devolve um [GraphRoutingPlan] pronto para ser
-/// desenhado por `table_component.dart`.
+/// Pure module (no `nocterm` dependency): takes the output of
+/// [GraphLayoutEngine] and returns a [GraphRoutingPlan] ready to be
+/// drawn by `table_component.dart`.
 library;
 
 import '../../models/graph_model.dart';
 import '../../models/schema_model.dart';
 
-/// Retângulo ocupado por uma tabela já posicionada no canvas de texto do
-/// grafo; é o obstáculo que as linhas de relacionamento não podem atravessar.
+/// Rectangle occupied by a table already placed on the text canvas of the
+/// graph; obstacles that relationship lines must not cross.
 class TableObstacle {
   const TableObstacle({
     required this.tableKey,
@@ -34,13 +34,13 @@ class TableObstacle {
   int get centerY => y + (height ~/ 2);
 }
 
-/// Orientação de um trecho de linha ou de um corredor de roteamento.
+/// Orientation of a line segment or routing corridor.
 enum RouteOrientation { horizontal, vertical }
 
-/// Direção da seta final de um relacionamento roteado.
+/// Direction of the final arrow of a routed relationship.
 enum ArrowDirection { up, down, left, right }
 
-/// Associa uma relação (`edgeIndex`) a uma posição (offset) dentro de um
+/// Associates a relation (`edgeIndex`) with a position (offset) inside a
 /// [RoutingCorridor].
 class RoutingLaneAssignment {
   const RoutingLaneAssignment({required this.edgeIndex, required this.offset});
@@ -49,9 +49,9 @@ class RoutingLaneAssignment {
   final int offset;
 }
 
-/// Pista/corredor de roteamento: espaço (um `colGap` ou `rowGap`, ou a
-/// margem lateral do canvas) onde uma ou mais relações podem precisar de
-/// posições distintas para não se sobrepor visualmente.
+/// Routing lane/corridor: space (a `colGap` or `rowGap`, or the
+/// canvas side margin) where one or more relations may need
+/// distinct positions so they do not visually overlap.
 class RoutingCorridor {
   RoutingCorridor({required this.id, required this.orientation})
     : allocatedLanes = <RoutingLaneAssignment>[];
@@ -62,8 +62,8 @@ class RoutingCorridor {
 
   int get laneCount => allocatedLanes.length;
 
-  /// Devolve o offset já atribuído a [edgeIndex] neste corredor, alocando um
-  /// novo (sequencial, em ordem de chegada) se ainda não existir.
+  /// Returns the offset already assigned to [edgeIndex] in this corridor, allocating a
+  /// new one (sequential, arrival order) if none exists yet.
   int allocateLane(int edgeIndex) {
     for (final lane in allocatedLanes) {
       if (lane.edgeIndex == edgeIndex) return lane.offset;
@@ -76,7 +76,7 @@ class RoutingCorridor {
   }
 }
 
-/// Trecho horizontal ou vertical de uma linha de relacionamento já roteada.
+/// Horizontal or vertical segment of an already routed relationship line.
 class RoutedSegment {
   const RoutedSegment({
     required this.orientation,
@@ -93,8 +93,8 @@ class RoutedSegment {
   final int y2;
 }
 
-/// Ponto onde a seta de um relacionamento é desenhada, com a direção para a
-/// qual ela aponta.
+/// Point where a relationship arrow is drawn, with the direction it
+/// points to.
 class ArrowPoint {
   const ArrowPoint({required this.x, required this.y, required this.direction});
 
@@ -103,8 +103,8 @@ class ArrowPoint {
   final ArrowDirection direction;
 }
 
-/// Resultado do roteamento de uma [GraphRelationEdge]: o caminho completo
-/// (segments) e o ponto/direção da seta, prontos para desenho.
+/// Routing result for a [GraphRelationEdge]: the full path
+/// (segments) and arrow point/direction, ready to draw.
 class RoutedEdge {
   const RoutedEdge({
     required this.edge,
@@ -119,9 +119,9 @@ class RoutedEdge {
   final ArrowPoint arrowPoint;
 }
 
-/// Resultado completo do roteamento: posição final de cada tabela (depois de
-/// qualquer expansão de corredor necessária) e o caminho roteado de cada
-/// relacionamento, na mesma ordem de `layout.edges`.
+/// Full routing result: final position of each table (after any
+/// required corridor expansion) and the routed path of each
+/// relationship, in the same order as `layout.edges`.
 class GraphRoutingPlan {
   const GraphRoutingPlan({
     required this.tablePositions,
@@ -156,10 +156,10 @@ class _EdgeClassification {
   final bool? targetBelow;
 }
 
-/// Calcula o roteamento final do grafo: posições das tabelas (com
-/// espaçamento expandido quando necessário) e o caminho de cada relação,
-/// sem cruzar tabelas e com pistas distintas para relações que dividem o
-/// mesmo corredor. Ver `research.md` (Decisões 1-5) e `data-model.md`.
+/// Computes final graph routing: table positions (with
+/// spacing expanded when needed) and the path of each relation,
+/// without crossing tables and with distinct lanes for relations that share
+/// the same corridor. See `research.md` (Decisions 1-5) and `data-model.md`.
 class GraphRoutingEngine {
   const GraphRoutingEngine();
 
@@ -188,7 +188,7 @@ class GraphRoutingEngine {
       }
     }
 
-    // 1) Classificar cada relação (topologia pura: linha/coluna relativas).
+    // 1) Classify each relation (pure topology: relative row/column).
     final classifications = <_EdgeClassification>[];
     for (final edge in layout.edges) {
       final sourceKey = edge.sourceTable.toLowerCase();
@@ -201,7 +201,7 @@ class GraphRoutingEngine {
       final sR = rowIndexOf[sourceKey];
       final tR = rowIndexOf[targetKey];
       if (sR == null || tR == null) {
-        // Tabela referenciada não encontrada no layout atual; ignora.
+        // Referenced table not found in the current layout; skip.
         classifications.add(_EdgeClassification(kind: _EdgeKind.sameRowBypass));
         continue;
       }
@@ -239,8 +239,8 @@ class GraphRoutingEngine {
       }
     }
 
-    // 2) Registrar corredores que afetam o espaçamento (colGap/rowGap) e
-    //    alocar pistas em ordem de edgeIndex (determinístico).
+    // 2) Register corridors that affect spacing (colGap/rowGap) and
+    //    allocate lanes in edgeIndex order (deterministic).
     final corridors = <String, RoutingCorridor>{};
     RoutingCorridor corridorFor(String id, RouteOrientation orientation) {
       return corridors.putIfAbsent(
@@ -274,16 +274,16 @@ class GraphRoutingEngine {
           break;
         case _EdgeKind.sameRowBypass:
         case _EdgeKind.rowSkipBypass:
-          // Pistas de contorno (margem) são resolvidas depois, já com as
-          // posições finais das tabelas (não afetam colGap/rowGap).
+          // Contour (margin) lanes are resolved later, once final table
+          // positions are known (they do not affect colGap/rowGap).
           break;
       }
     }
 
-    // 3) Espaçamento necessário por corredor: cresce apenas o suficiente
-    //    para comportar todas as pistas alocadas, nunca aceitando cruzamento
-    //    residual (Clarification 1 / FR-001), mas sem inflar corredores que
-    //    não precisam (Princípio VII — Simplicidade Deliberada).
+    // 3) Required spacing per corridor: grow just enough
+    //    to fit all allocated lanes, never accepting residual crossings
+    //    (Clarification 1 / FR-001), without inflating corridors that
+    //    do not need it (Principle VII — Deliberate Simplicity).
     int requiredSpanFor(int laneCount, int base) {
       if (laneCount <= 1) return base;
       final needed = 2 * (laneCount - 1) + 1;
@@ -317,9 +317,9 @@ class GraphRoutingEngine {
       }
     }
 
-    // Laços de auto-relacionamento em tabelas que não estão na primeira
-    // linha sobem pelo corredor de linha logo acima; garante espaço
-    // suficiente para a maior altura de laço necessária naquele corredor.
+    // Self-relationship loops on tables that are not on the first
+    // row climb through the row corridor just above; ensure space
+    // enough for the largest loop height needed in that corridor.
     for (var i = 0; i < classifications.length; i++) {
       if (classifications[i].kind != _EdgeKind.selfLoop) continue;
       final key = layout.edges[i].sourceTable.toLowerCase();
@@ -332,13 +332,13 @@ class GraphRoutingEngine {
           neededHeight > rowGapAfterRow[row - 1]) {
         rowGapAfterRow[row - 1] = neededHeight;
       }
-      // Evita que o laço "vaze" para fora do corredor calculado.
+      // Prevent the loop from spilling outside the computed corridor.
       corridor.allocateLane(i);
     }
 
-    // 4) Posições finais das tabelas, usando os espaçamentos (possivelmente
-    //    expandidos) calculados acima. Mesma fórmula de hoje quando nenhum
-    //    corredor precisou crescer (preserva FR-006 — sem regressão).
+    // 4) Final table positions using the spacings (possibly
+    //    expanded) computed above. Same formula as today when no
+    //    corridor needed to grow (preserves FR-006 — no regression).
     final rowWidths = <int>[];
     final rowHeights = <int>[];
     for (var r = 0; r < layout.rows.length; r++) {
@@ -386,7 +386,7 @@ class GraphRoutingEngine {
       if (r < rowGapAfterRow.length) cursorY += rowGapAfterRow[r];
     }
 
-    // 5) Roteamento final de cada relação, usando as posições definitivas.
+    // 5) Routing final de each relation, usando the positions definitivas.
     var globalMinX = 0;
     var globalMaxX = 0;
     for (final node in tablePositions.values) {
@@ -557,14 +557,14 @@ class GraphRoutingEngine {
 
         case _EdgeKind.sameRowBypass:
         case _EdgeKind.rowSkipBypass:
-          // Nunca sai lateralmente na altura da própria linha: quando a
-          // tabela de origem (ou destino) não está na borda da sua linha,
-          // um segmento lateral direto atravessaria qualquer tabela vizinha
-          // no caminho (viola FR-001). Em vez disso, escapa sempre por cima
-          // da tabela — a faixa imediatamente acima de qualquer linha
-          // (inclusive a margem superior, para a linha 0) nunca contém
-          // tabelas — depois contorna pela margem externa (fora de todas as
-          // colunas) e desce de volta por cima da tabela de destino.
+          // Never exit sideways at the table's own row height: when a
+          // source (or target) table is not on the edge of its row,
+          // a direct side segment would cross any neighboring table
+          // on the path (violates FR-001). Instead always escape above
+          // the table — the band immediately above any row
+          // (including the top margin, for row 0) never contains
+          // tables — then go around the outer margin (outside all
+          // columns) and drop back above the target table.
           final sourceX = source.centerX;
           final targetX = target.centerX;
           final sourceExitY = source.y - 1;

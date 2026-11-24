@@ -1,6 +1,5 @@
-// Testes unitários: validações e erros de `ProjectStorage` não cobertos em
-// profundidade pelos testes de funcionalidade (arquivos corrompidos, nomes
-// inválidos, listagem tolerante a erros).
+// Unit tests: `ProjectStorage` validations and errors not covered in depth
+// by feature tests (corrupt files, invalid names, error-tolerant listing).
 import 'dart:io';
 
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';

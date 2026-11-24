@@ -68,7 +68,7 @@ class ForeignKeyDef {
   }
 }
 
-/// Estado central: a lista de tabelas que existem no schema em memória.
+/// Central state: the list of tables present in the in-memory schema.
 class SchemaState {
   final List<TableDef> tables = [];
   DatabaseEngine databaseEngine = DatabaseEngine.postgres;
@@ -410,7 +410,7 @@ class SchemaState {
   }
 }
 
-/// Representa uma tabela, com nome e lista de colunas.
+/// Representa a table, with nome e lista de columns.
 class TableDef {
   String name;
   final List<ColumnDef> columns;

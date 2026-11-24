@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Corrigir linhas de relacionamento transpassando tabelas no grafo
+# Specification Quality Checklist: Fix relationship lines crossing tables in the graph
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-10-08
@@ -31,12 +31,12 @@
 
 ## Notes
 
-- A spec inclui uma seção "Causa Raiz Confirmada no Código", fora do template
-  padrão, por exigência explícita do pedido de especificação (confirmar as
-  hipóteses de causa raiz da issue antes de declarar o comportamento
-  esperado). Essa seção cita nomes de arquivo e de variáveis do código como
-  evidência da causa raiz, não como decisão de implementação — a técnica de
-  correção (algoritmo de roteamento) permanece em aberto para o
+- The spec includes a "Confirmed Root Cause in Code" section, outside the standard
+  template, by explicit requirement of the specification request (confirm the
+  issue's root-cause hypotheses before declaring expected
+  behavior). That section cites file and variable names from the code as
+  evidence of the root cause, not as an implementation decision — the
+  fix technique (routing algorithm) remains open for
   `/speckit-plan`.
-- Todos os itens do checklist passaram na primeira validação; nenhuma
-  iteração de correção foi necessária.
+- All checklist items passed on the first validation; no
+  correction iteration was needed.

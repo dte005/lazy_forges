@@ -1,5 +1,5 @@
-// Testes de funcionalidade: adicionar/renomear/alterar colunas, PK e
-// colunas enum, dirigidos pela API pública (`EditorProvider.submitCommand`).
+// Testes de feature: adicionar/renomear/alterar columns, PK e
+// enum columns, driven via the public API (`EditorProvider.submitCommand`).
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart';
 import 'package:lazy_forge/src/services/storage/project_storage.dart';

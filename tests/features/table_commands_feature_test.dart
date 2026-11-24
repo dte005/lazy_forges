@@ -1,5 +1,5 @@
-// Testes de funcionalidade: criação, remoção, renomeação e listagem de
-// tabelas, dirigidos pela API pública (`EditorProvider.submitCommand`).
+// Feature tests: create, delete, rename, and list
+// tables, driven via the public API (`EditorProvider.submitCommand`).
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart';
 import 'package:lazy_forge/src/services/storage/project_storage.dart';

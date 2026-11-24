@@ -1,7 +1,7 @@
-// Testes unitários do motor de roteamento de linhas do grafo
-// (`GraphRoutingEngine`), introduzido para corrigir a issue #2 (linhas de
-// relacionamento cruzando tabelas). Cobre o cálculo de posições, o
-// contorno de obstáculos (bypass) e a alocação de pistas paralelas.
+// Unit tests for the graph line routing engine
+// (`GraphRoutingEngine`), introduced to fix issue #2 (relationship lines
+// crossing tables). Covers position calculation, obstacle contour (bypass),
+// and parallel lane allocation.
 import 'package:lazy_forge/src/components/editor/components/table/graph_routing.dart';
 import 'package:lazy_forge/src/components/editor/models/graph_model.dart';
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
@@ -25,8 +25,8 @@ GraphRelationEdge _edge(String sourceTable, String targetTable) {
   );
 }
 
-/// Verdadeiro se o segmento [seg] (horizontal ou vertical) atravessa o
-/// interior do retângulo de [obstacle]. Toca a borda não conta como
+/// Verdadeiro sand the segment [seg] (horizontal ou vertical) atravessa o
+/// interior of the [obstacle] rectangle. Touching the border does not count as
 /// atravessar (as linhas nascem/terminam encostadas nas bordas das tabelas
 /// vizinhas por design).
 bool _segmentCrossesObstacle(RoutedSegment seg, TableObstacle obstacle) {
@@ -76,7 +76,7 @@ void main() {
 
       expect(plan.tablePositions['a']!.width, size.width);
       expect(plan.tablePositions['b']!.height, size.height);
-      // 'b' fica à direita de 'a' (mesma linha, ordem alfabética do layout).
+      // 'b' is to the right of 'a' (same row, alphabetical layout order).
       expect(
         plan.tablePositions['b']!.x,
         greaterThan(plan.tablePositions['a']!.right),

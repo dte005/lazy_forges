@@ -1,5 +1,5 @@
-// Testes unitários: agrupamento de tabelas em linhas pelo grafo de
-// dependências de FK (`GraphLayoutEngine`).
+// Unit tests: grouping tables into rows by the FK dependency graph
+// (`GraphLayoutEngine`).
 import 'package:lazy_forge/src/components/editor/components/table/graph_layout.dart';
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:test/test.dart';

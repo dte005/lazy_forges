@@ -2,29 +2,29 @@
 
 [![pub package](https://img.shields.io/pub/v/lazy_forge.svg)](https://pub.dev/packages/lazy_forge) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-LazyForge é uma IDE de terminal (TUI) para modelagem de schema SQL com fluxo keyboard-driven, focada em velocidade de edição, visualização em tempo real e exportação de DDL.
+LazyForge is a terminal IDE (TUI) for SQL schema modeling with a keyboard-driven workflow, focused on editing speed, real-time visualization, and DDL export.
 
-## Links oficiais
+## Official links
 
-- Site do projeto: https://dte005.github.io/lazy_forges/
-- Documentação da página (tipos de banco): https://dte005.github.io/lazy_forges/#database-types
-- Pacote no pub.dev: https://pub.dev/packages/lazy_forge
-- Repositório: https://github.com/dte005/lazy_forges
+- Project site: https://dte005.github.io/lazy_forges/
+- Page documentation (database types): https://dte005.github.io/lazy_forges/#database-types
+- Package on pub.dev: https://pub.dev/packages/lazy_forge
+- Repository: https://github.com/dte005/lazy_forges
 
-## Mídias do projeto
+## Project media
 
-<img src="https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_sleep_icon.svg" alt="LazyForge — ícone principal" width="220" />
+<img src="https://raw.githubusercontent.com/dte005/lazy_forges/gh_page/assets/lazy_forge_sleep_icon.svg" alt="LazyForge — main icon" width="220" />
 
-## Principais capacidades
+## Main capabilities
 
-- Criação, alteração e remoção de tabelas por comando.
-- Definição de colunas com tipos por engine de banco.
-- Relacionamentos PK/FK com visualização em grafo no terminal.
-- Seleção de engine (`postgres`, `mysql`, `sqlite`).
-- Exportação de schema para SQL DDL.
-- Histórico de comandos e atalhos de produtividade no editor.
+- Create, alter, and remove tables by command.
+- Define columns with types per database engine.
+- PK/FK relationships with graph visualization in the terminal.
+- Engine selection (`postgres`, `mysql`, `sqlite`).
+- Export schema to SQL DDL.
+- Command history and productivity shortcuts in the editor.
 
-## Instalação (pub.dev)
+## Installation (pub.dev)
 
 ```bash
 dart pub global activate lazy_forge
@@ -32,20 +32,20 @@ dart pub global activate lazy_forge
 lazy_forge
 ```
 
-## Execução local (desenvolvimento)
+## Local run (development)
 
 ```bash
 dart pub get
 dart run bin/lazy_forge.dart
 ```
 
-Com hot reload:
+With hot reload:
 
 ```bash
 dart --enable-vm-service bin/lazy_forge.dart
 ```
 
-## Comandos principais
+## Main commands
 
 - `create table <table> [--autoincrement]`
 - `delete table <table>` / `drop table <table>`
@@ -61,21 +61,21 @@ dart --enable-vm-service bin/lazy_forge.dart
 - `show database`
 - `show types`
 - `show tables`
-- `export [nome_arquivo.sql]`
+- `export [file_name.sql]`
 - `history`
 - `help`
 
-## Persistência e export
+## Persistence and export
 
-- Projetos são salvos automaticamente em `./lazyforge_projects` (diretório atual de execução).
-- Arquivos SQL exportados são gravados no diretório atual.
+- Projects are saved automatically under `./lazyforge_projects` (current working directory).
+- Exported SQL files are written to the current directory.
 
-## Bancos suportados
+## Supported databases
 
 - PostgreSQL
 - MySQL
 - SQLite
 
-## Licença
+## License
 
 MIT.

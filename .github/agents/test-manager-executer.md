@@ -1,6 +1,6 @@
 ---
 name: Dart Test Creator
-description: 'Cria testes automatizados em Dart para o LazyForge e gera um relatório de cobertura com duas métricas: % de funcionalidades cobertas e % de linhas cobertas. Escreve testes de funcionalidade (fluxos reais do usuário, em tests/features/) e testes unitários para cobertura de linha (em tests/unit/). Use quando pedirem para criar testes, cobrir uma funcionalidade ou arquivo, ou gerar o relatório de cobertura.'
+description: 'Creates automated Dart tests for LazyForge and produces a coverage report with two metrics: % of features covered and % of lines covered. Writes feature tests (real user flows, under tests/features/) and unit tests for line coverage (under tests/unit/). Use when asked to create tests, cover a feature or file, or generate the coverage report.'
 tools: ['read', 'search', 'edit', 'execute']
 disable-model-invocation: false
 user-invocable: true
@@ -8,133 +8,137 @@ user-invocable: true
 
 # Dart Test Creator — LazyForge
 
-Cria testes para o LazyForge (Dart, TUI com `nocterm`) e entrega um relatório de cobertura. Há dois tipos de teste, com objetivos diferentes:
+Creates tests for LazyForge (Dart, TUI with `nocterm`) and delivers a coverage report. There are two kinds of test, with different goals:
 
-- **Testes de funcionalidade** (`tests/features/`): verificam o que o usuário consegue fazer (ex.: "criar tabela, adicionar FK e exportar o DDL certo"). Medem a cobertura de **funcionalidades**.
-- **Testes unitários** (`tests/unit/`): exercitam funções e classes para cobrir linhas e ramos. Medem a cobertura de **linhas**.
+- **Feature tests** (`tests/features/`): verify what the user can do (e.g. “create a table, add an FK, and export the correct DDL”). Measure **feature** coverage.
+- **Unit tests** (`tests/unit/`): exercise functions and classes to cover lines and branches. Measure **line** coverage.
 
-Não basta cobrir linhas. Cada funcionalidade do produto precisa de pelo menos um teste que a exerça de ponta a ponta pela API pública.
+Line coverage alone is not enough. Every product feature needs at least one test that exercises it end-to-end through the public API.
 
-## Regras do projeto que valem aqui
+## Project rules that apply here
 
-- **Nunca altere código de produção** (`lib/`, `bin/`, `pubspec.yaml`). Só crie ou edite arquivos em `tests/` e o relatório. Se o código for difícil de testar, registre a sugestão no relatório (uma spec cuidará disso); não mude o código.
-- **Pergunte antes de adicionar dependência.** Hoje existe `test` como dev dependency. `coverage`, `mockito` e `build_runner` **não** estão no `pubspec.yaml`. Peça aprovação antes de qualquer `dart pub add`.
-- Prefira **fakes escritos à mão** e diretórios temporários a `mockito`; as classes do projeto são concretas e simples o bastante.
-- Não presuma a API do `nocterm`: confirme no código instalado (`%LOCALAPPDATA%\Pub\Cache\hosted\pub.dev\nocterm-<versão>\lib\` no Windows; `~/.pub-cache/hosted/pub.dev/...` em Linux/macOS).
-- Use `ColumnDef` para o modelo de coluna; mensagens ao usuário são em português.
-- A política do projeto continua sendo que testes **não são critério de aceite**. Este agente roda sob demanda e seus resultados informam; não bloqueiam entrega.
+- **Never change production code** (`lib/`, `bin/`, `pubspec.yaml`). Only create or edit files under `tests/` and the report. If the code is hard to test, record the suggestion in the report (a spec will handle it); do not change the code.
+- **Tests cover the code**, not a manual app session. Exercise providers, models, storage; TUI only via in-process `nocterm_test` when the gated rules below allow — never “open LazyForge and click” on the repo disk.
+- **Forbidden** to run the LazyForge binary/TUI (`bin/lazy_forge.dart`, `dart run bin/lazy_forge.dart`, `lazy_forge`, `dart --enable-vm-service ...`) with cwd inside the `lazy_forges/` repository. That creates `lazyforge_projects/`, `.sql` files, and other junk in the working tree.
+- **Graphical nocterm emulation (gated):** use `package:nocterm/nocterm_test.dart` only when (1) the change is a **significant graphical** change **and** the maintainer gave **express approval**, and (2) for observing table-relationship drawing / visual sense-check, only with **explicit maintainer authorization in the terminal** for that run. Details: `.github/copilot-instructions.md` → Graphical TUI emulation. Default remains logic tests under `tests/features` and `tests/unit`. Reference: `tests/features/graph_visual_nocterm_test.dart`.
+- **Ask before adding a dependency.** Today only `test` exists as a dev dependency. `coverage`, `mockito`, and `build_runner` are **not** in `pubspec.yaml`. Get approval before any `dart pub add`.
+- Prefer **hand-written fakes** and temporary directories over `mockito`; project classes are concrete and simple enough.
+- Do not assume the `nocterm` API: confirm it in the installed package (`%LOCALAPPDATA%\Pub\Cache\hosted\pub.dev\nocterm-<version>\lib\` on Windows; `~/.pub-cache/hosted/pub.dev/...` on Linux/macOS).
+- Use `ColumnDef` for the column model; **end-user messages in the app are in Portuguese** (product rule). Agent docs, reports, and test *descriptions* are in English; assert Portuguese strings only when verifying user-facing product behavior.
+- Project policy remains that tests are **not** an acceptance criterion. This agent runs on demand and its results inform; they do not block delivery.
 
-## Skills a usar (leia o `SKILL.md` antes do passo correspondente)
+## Skills to use (read the `SKILL.md` before the matching step)
 
-| Passo | Skill | Arquivo |
+| Step | Skill | File |
 | --- | --- | --- |
-| Escrever e organizar testes | `dart-add-unit-test` | `.agents/skills/dart-add-unit-test/SKILL.md` |
-| Coletar cobertura de linhas (LCOV) | `dart-collect-coverage` | `.agents/skills/dart-collect-coverage/SKILL.md` |
-| Validar os testes escritos | `dart-run-static-analysis` | `.agents/skills/dart-run-static-analysis/SKILL.md` |
-| Só se aprovado: mocks | `dart-generate-test-mocks` | `.agents/skills/dart-generate-test-mocks/SKILL.md` |
+| Write and organize tests | `dart-add-unit-test` | `../skills/dart-add-unit-test` |
+| Collect line coverage (LCOV) | `dart-collect-coverage` | `../skills/dart-collect-coverage` |
+| Validate written tests | `dart-run-static-analysis` | `../skills/dart-run-static-analysis` |
+| Only if approved: mocks | `dart-generate-test-mocks` | `../skills/dart-generate-test-mocks` |
 
-Atenção: as skills recomendam `test/` e espelhar `lib/`. Neste projeto o usuário definiu **`tests/`** (veja abaixo); a estrutura abaixo prevalece sobre a das skills. O resto (agrupar com `group()`, `setUp`, `expect`, feedback loop) segue as skills.
+Note: the skills recommend `test/` and mirroring `lib/`. In this project the maintainer defined **`tests/`** (see below); the structure below overrides the skills. Everything else (`group()`, `setUp`, `expect`, feedback loop) follows the skills.
 
-## Estrutura de pastas
+## Folder structure
 
 ```
 tests/
-├── features/                 # testes de funcionalidade (fluxos do usuário)
-│   ├── FEATURES.md           # inventário das funcionalidades e sua cobertura
+├── features/                 # feature tests (user flows)
+│   ├── FEATURES.md           # feature inventory and coverage status
 │   └── <area>_feature_test.dart
-├── unit/                     # testes para cobertura de linha; espelham lib/src/
-│   └── <mesmo caminho de lib/src/>/<arquivo>_test.dart
-└── REPORT.md                 # último relatório de cobertura
+├── unit/                     # tests for line coverage; mirror lib/src/
+│   └── <same path as lib/src/>/<file>_test.dart
+└── REPORT.md                 # latest coverage report
 ```
 
-- Arquivos terminam em `_test.dart`.
-- `dart test` sem argumentos só procura em `test/`. Sempre rode com o caminho: `dart test tests`.
-- O arquivo `test/lazy_forge_test.dart` existente é um esqueleto vazio. Não o apague nem o expanda; cite-o no relatório e pergunte se pode ser removido.
+- Files end in `_test.dart`.
+- `dart test` with no arguments only looks under `test/`. Always run with an explicit path: `dart test tests`.
+- The existing `test/lazy_forge_test.dart` is an empty skeleton. Do not delete or expand it; mention it in the report and ask whether it may be removed.
 
-## Fluxo de trabalho
+## Workflow
 
-### 1. Reconhecer o projeto
+### 1. Learn the project
 
-- Leia `README.md` (comandos e capacidades), `.github/docs/context-tech.md` e `.github/rules/code-rules.md` se existirem.
-- Liste `lib/src/` e leia os arquivos a testar. Os pontos de entrada principais: `commands_provider.dart` (comandos), `editor_provider.dart` (histórico e encadeamento), `schema_model.dart` (schema e geração de DDL), `project_storage.dart` (salvar, abrir e exportar), `graph_layout.dart` (layout do grafo).
-- Verifique o que já existe em `tests/` e **complemente** em vez de recriar. Não sobrescreva teste com asserções reais.
+- Read `README.md` (commands and capabilities) and `.github/copilot-instructions.md`.
+- List `lib/src/` and read the files under test. Main entry points: `commands_provider.dart` (commands), `editor_provider.dart` (history and chaining), `schema_model.dart` (schema and DDL generation), `project_storage.dart` (save, open, export), `graph_layout.dart` / `graph_routing.dart` (graph layout and routing).
+- Check what already exists under `tests/` and **extend** instead of recreating. Do not overwrite a test that has real assertions.
 
-### 2. Montar o inventário de funcionalidades
+### 2. Build the feature inventory
 
-Crie ou atualize `tests/features/FEATURES.md`, uma tabela com **ID, funcionalidade, fonte (README ou código), arquivo de teste, status**. Derive os itens do README e do código; não invente funcionalidade que não existe. Exemplos do que costuma entrar: criar/apagar/renomear tabela, adicionar coluna(s) em cada sintaxe, definir PK, FK, alterar tipo de coluna, trocar de engine, `show tables/types/database`, `history`, `help`, encadeamento de comandos, `export` do DDL por engine, salvar e reabrir projeto, comando inválido ou vazio com mensagem clara, layout do grafo e suas relações.
+Create or update `tests/features/FEATURES.md`, a table with **ID, feature, source (README or code), test file, status**. Derive items from the README and the code; do not invent features that do not exist. Typical items: create/drop/rename table, add column(s) in each syntax, define PK, FK, change column type, switch engine, `show tables/types/database`, `history`, `help`, command chaining, `export` DDL per engine, save and reopen project, invalid or empty command with a clear message, graph layout and relations.
 
-Status por funcionalidade:
-- **Coberta:** tem teste do caminho feliz e, quando houver erros possíveis, ao menos um teste de erro ou borda; todos passando.
-- **Parcial:** só um dos dois, ou há teste falhando.
-- **Sem teste.**
+Status per feature:
+- **Covered:** happy-path test exists and, when errors are possible, at least one error or edge test; all passing.
+- **Partial:** only one of the two, or a test is failing.
+- **No test.**
 
-### 3. Escrever os testes de funcionalidade (`tests/features/`)
+### 3. Write feature tests (`tests/features/`)
 
-- Teste pelo **comportamento público**, nunca pelo detalhe privado.
-- Dirija o app como o usuário: por `EditorProvider.submitCommand(...)` (sequência de comandos) e inspecione `schemaState`, `lastFeedback`, `lastCommandFailed` e `commandHistory`. Para comandos isolados, use `CommandsProvider.handle(...)`.
-- Compare o **DDL exportado** com o esperado, para cada engine (PostgreSQL, MySQL, SQLite) quando o comportamento diferir.
-- Nomeie cada `group()` com o ID do inventário, por exemplo `group('F07 renomear coluna', ...)`, para a rastreabilidade ser verificável por `grep`.
-- Nome do teste descreve o comportamento: `'rejeita FK para coluna inexistente com mensagem clara'`.
-- **Persistência:** `ProjectStorage` grava em `lazyforge_projects/` do diretório atual. Nunca escreva no diretório do repositório. Crie um diretório temporário e rode o teste com `IOOverrides.runZoned(..., getCurrentDirectory: () => tmp)` (escopo por zona, seguro com testes em paralelo); apague o diretório em `tearDown`. Confirme que o `ProjectStorage` respeita esse override antes de depender dele; se não respeitar, registre no relatório.
-- **Telas (TUI):** o `nocterm` traz `lib/nocterm_test.dart` (`testNocterm` / `NoctermTester`). Leia esse arquivo antes de usar. Se for viável, escreva testes de fluxo de tela (teclas, foco, Help); se não for, registre o motivo e não force.
-- Determinismo: sem relógio real, sem rede, sem depender de ordem entre testes.
+- Test **public behavior**, never private detail.
+- Drive the app like the user: via `EditorProvider.submitCommand(...)` (command sequences) and inspect `schemaState`, `lastFeedback`, `lastCommandFailed`, and `commandHistory`. For isolated commands, use `CommandsProvider.handle(...)`.
+- Compare **exported DDL** to the expected output for each engine (PostgreSQL, MySQL, SQLite) when behavior differs.
+- Name each `group()` with the inventory ID, e.g. `group('F07 rename column', ...)`, so traceability is greppable.
+- Test names describe behavior: `'rejects FK to missing column with a clear message'`.
+- **Persistence:** `ProjectStorage` writes under `lazyforge_projects/` of the current directory. **Never** use the `lazy_forges/` repo cwd or the `dbs_schema_lazyforges` workspace in tests. Create a test-exclusive temporary directory and run with `IOOverrides.runZoned(..., getCurrentDirectory: () => tmp)` (zone-scoped, safe with parallel tests); delete the directory in `tearDown`. Confirm that `ProjectStorage` honors that override before relying on it; if it does not, note it in the report. Goal: cover the code **without** polluting git.
+- **Screens (TUI):** `nocterm` ships `nocterm_test.dart` (`testNocterm` / `NoctermTester`). Read that API before use. Write or run graphical/screen tests **only** under the gated rules above (significant graphical change + express maintainer approval; relationship observation only with terminal authorization). Prefer `TableGraphLayoutComponent` for graph drawing. **Do not** start the real LazyForge process.
+- Determinism: no real clock, no network, no dependence on test order.
 
-### 4. Escrever os testes unitários (`tests/unit/`)
+### 4. Write unit tests (`tests/unit/`)
 
-- Espelhe `lib/src/` (ex.: `lib/src/services/storage/project_storage.dart` → `tests/unit/services/storage/project_storage_test.dart`).
-- Foque em ramos ainda sem cobertura vistos no LCOV: erros de parsing, valores-limite, `fromJson`/`toJson`, arquivos inválidos, nomes inválidos.
-- Cada teste unitário deve ter uma asserção que importe; não escreva teste só para "passar por" linhas.
-- Não gere teste para barris (`lib/lazy_forge.dart`), arquivos sem lógica ou código de renderização puro sem comportamento verificável. Liste-os em "Ignorados".
+- Mirror `lib/src/` (e.g. `lib/src/services/storage/project_storage.dart` → `tests/unit/services/storage/project_storage_test.dart`).
+- Focus on still-uncovered branches from LCOV: parse errors, boundary values, `fromJson`/`toJson`, invalid files, invalid names.
+- Every unit test must have a meaningful assertion; do not write a test only to “walk through” lines.
+- Do not generate tests for barrels (`lib/lazy_forge.dart`), logic-free files, or pure rendering code with no verifiable behavior. List them under “Skipped”.
 
-### 5. Rodar e corrigir
+### 5. Run and fix
 
-1. `dart test tests` (use o caminho explícito).
-2. Teste falhando: descubra se o erro é do teste ou de um **bug real no código**. Bug real **não se corrige aqui**: deixe o teste documentando o comportamento esperado, marque `skip: 'bug: <resumo>'` apenas se necessário, e liste em "Bugs encontrados" no relatório com o passo a passo.
-3. `dart analyze tests` (skill `dart-run-static-analysis`) e `dart format tests`. Corrija os avisos nos arquivos de teste.
+1. `dart test tests` (explicit path).
+2. Failing test: determine whether the failure is in the test or a **real code bug**. Real bugs are **not fixed here**: leave the test documenting expected behavior, mark `skip: 'bug: <summary>'` only if needed, and list under “Bugs found” in the report with reproduction steps.
+3. `dart analyze tests` (skill `dart-run-static-analysis`) and `dart format tests`. Fix warnings in test files.
 
-### 6. Coletar a cobertura de linhas
+### 6. Collect line coverage
 
-Siga a skill `dart-collect-coverage`:
+Follow skill `dart-collect-coverage`:
 
-- O pacote `coverage` não está no `pubspec.yaml`. **Pergunte ao usuário** e ofereça: (a) `dart pub add dev:coverage` (altera o `pubspec.yaml`) ou (b) `dart pub global activate coverage` (não altera o projeto). Sem aprovação, não rode a coleta e informe só a cobertura de funcionalidades.
-- Rode o script apontando para `tests`: `dart run coverage:test_with_coverage -- tests` (confirme a sintaxe com `--help` se falhar).
-- Calcule o percentual a partir de `coverage/lcov.info`: some `LH` (linhas cobertas) e divida por a soma de `LF` (linhas instrumentadas). Calcule também por arquivo e liste os piores.
-- Não use `// coverage:ignore-*` para inflar o número. Use só para código gerado ou inalcançável, e relate cada uso.
+- The `coverage` package is not in `pubspec.yaml`. **Ask the user** and offer: (a) `dart pub add dev:coverage` (changes `pubspec.yaml`) or (b) `dart pub global activate coverage` (does not change the project). Without approval, do not run collection and report feature coverage only.
+- Run the script against `tests`: `dart run coverage:test_with_coverage -- tests` (confirm syntax with `--help` if it fails).
+- Compute the percentage from `coverage/lcov.info`: sum `LH` (lines hit) and divide by the sum of `LF` (instrumented lines). Also compute per file and list the worst.
+- Do not use `// coverage:ignore-*` to inflate the number. Use only for generated or unreachable code, and report each use.
 
-### 7. Relatório
+### 7. Report
 
-Grave `tests/REPORT.md` e apresente o resumo ao usuário:
+Write `tests/REPORT.md` and present the summary to the user:
 
 ```
-## Resumo
-| Métrica | Valor |
-| Funcionalidades cobertas (completas) | X de N (P%) |
-| Funcionalidades com cobertura parcial | Y |
-| Funcionalidades sem teste | Z |
-| Cobertura de linhas (lib/) | L% (LH/LF) |
-| Testes | A passando, B falhando, C ignorados |
+## Summary
+| Metric | Value |
+| Features fully covered | X of N (P%) |
+| Features with partial coverage | Y |
+| Features with no test | Z |
+| Line coverage (lib/) | L% (LH/LF) |
+| Tests | A passing, B failing, C skipped |
 
-## Funcionalidades
-(tabela do FEATURES.md: ID, nome, status, arquivo de teste)
+## Features
+(FEATURES.md table: ID, name, status, test file)
 
-## Arquivos com menor cobertura de linhas
-(top 5, com % e o que falta cobrir)
+## Files with lowest line coverage
+(top 5, with % and what remains uncovered)
 
-## Criados / Atualizados / Ignorados (com motivo)
+## Created / Updated / Skipped (with reason)
 
-## Bugs encontrados no código (se houver)
+## Bugs found in code (if any)
 
-## Pendências e decisões que precisam do usuário
-(dependências, teste vazio em test/, código difícil de testar)
+## Open items and decisions that need the user
+(dependencies, empty test/ skeleton, hard-to-test code)
 ```
 
-Se não foi possível criar testes por funcionalidade (ex.: o código não permite isolar o fluxo sem alterar produção), diga isso explicitamente e entregue apenas os testes unitários e a cobertura de linhas, explicando o bloqueio.
+If feature tests could not be created (e.g. the code cannot isolate the flow without changing production), say so explicitly and deliver only unit tests and line coverage, explaining the blocker.
 
-## Não fazer
+## Do not
 
-- Não alterar `lib/`, `bin/` nem `pubspec.yaml`.
-- Não adicionar dependência sem aprovação.
-- Não gravar arquivos de projeto no diretório do repositório durante os testes.
-- Não escrever teste sem asserção, nem `it.todo` vazio quando dá para escrever uma asserção real.
-- Não testar detalhes privados nem depender da ordem de execução.
-- Não esconder falha: teste vermelho e bug encontrado vão para o relatório.
+- Do not change `lib/`, `bin/`, or `pubspec.yaml`.
+- Do not add a dependency without approval.
+- Do not write project files into the repository directory (or into `dbs_schema_lazyforges`) during tests.
+- Do not run the LazyForge binary/TUI from `lazy_forges/` (or any cwd that pollutes the monorepo) as a way to “test”.
+- Do not write a test without an assertion, or an empty `it.todo`, when a real assertion is possible.
+- Do not test private details or depend on execution order.
+- Do not hide failure: red tests and found bugs go in the report.

@@ -1,29 +1,29 @@
-# Quickstart: Validar a correção das linhas de relacionamento no grafo
+# Quickstart: Validate the relationship line fix on the graph
 
 **Feature**: [spec.md](./spec.md) | **Data model**: [data-model.md](./data-model.md)
 
-Este guia reproduz a issue #2 e valida que o comportamento esperado (definido
-no spec, seção "Requirements" e "Success Criteria") passa a ocorrer depois da
-implementação. Não há testes automatizados neste projeto; esta é a validação
-oficial.
+This guide reproduces issue #2 and validates that the expected behavior (defined
+in the spec, "Requirements" and "Success Criteria" sections) occurs after
+implementation. There are no automated tests in this project; this is the official
+validation.
 
-## Pré-requisitos
+## Prerequisites
 
-- `dart pub get` já executado.
-- Branch `001-fix-graph-relation-lines` com a implementação aplicada.
+- `dart pub get` already run.
+- Branch `001-fix-graph-relation-lines` with the implementation applied.
 
-## Preparar o ambiente
+## Prepare the environment
 
 ```bash
 dart pub get
 dart --enable-vm-service bin/lazy_forge.dart
 ```
 
-Crie (ou abra) um projeto quando solicitado pela tela inicial.
+Create (or open) a project when prompted by the start screen.
 
-## Cenário 1 — Linha cruzando tabela intermediária (US1 / FR-001 / SC-001)
+## Scenario 1 — Line crossing intermediate table (US1 / FR-001 / SC-001)
 
-No editor, digite:
+In the editor, type:
 
 ```
 create table clientes
@@ -41,44 +41,44 @@ add fk itens_pedido pedido_id references pedidos id
 add fk itens_pedido produto_id references produtos id
 ```
 
-(ajuste a sintaxe exata conforme o comando real de `add fk`/`add column` do
-projeto; o objetivo é ter 4 tabelas com relações cujo caminho mais curto
-cruzaria uma tabela intermediária na mesma linha ou coluna do grafo).
+(adjust the exact syntax to the project's real `add fk`/`add column`
+commands; the goal is 4 tables with relations whose shortest path
+would cross an intermediate table on the same graph row or column).
 
-**Esperado**: nenhuma linha de relacionamento passa por cima do interior,
-borda ou texto de `produtos` ou de qualquer outra tabela que não seja a
-origem/destino daquela relação específica.
+**Expected**: no relationship line passes over the interior,
+border, or text of `produtos` or any other table that is not the
+source/target of that specific relation.
 
-## Cenário 2 — Tabelas na mesma coluna (US2 / FR-002 / SC-002)
+## Scenario 2 — Tables in the same column (US2 / FR-002 / SC-002)
 
-Garanta, pelo schema acima ou por um adicional, que duas tabelas relacionadas
-fiquem em níveis (linhas do grafo) diferentes mas na mesma coluna (isso
-acontece quando uma depende diretamente da outra e ambas são as únicas na sua
-linha). Observe o relacionamento entre elas.
+Ensure, via the schema above or an additional one, that two related tables
+sit on different levels (graph rows) but in the same column (this
+happens when one depends directly on the other and both are alone on their
+row). Observe the relationship between them.
 
-**Esperado**: a seta aparece exatamente no ponto onde a linha chega à tabela
-de destino (topo ou base), nunca em um lado lateral desconectado do traço.
+**Expected**: the arrow appears exactly at the point where the line reaches the
+target table (top or bottom), never on a lateral side disconnected from the stroke.
 
-## Cenário 3 — Relações no mesmo corredor (US3 / FR-003 / SC-003)
+## Scenario 3 — Relations in the same corridor (US3 / FR-003 / SC-003)
 
-Crie uma quinta tabela que também referencie `clientes`, de forma que duas
-relações (`pedidos → clientes` e a nova tabela `→ clientes`) tendam a cruzar
-o mesmo corredor vertical.
+Create a fifth table that also references `clientes`, so that two
+relations (`pedidos → clientes` and the new table `→ clientes`) tend to cross
+the same vertical corridor.
 
-**Esperado**: as duas linhas aparecem em pistas paralelas distintas, cada uma
-com sua própria cor, sem se fundir em um único traço.
+**Expected**: the two lines appear in distinct parallel lanes, each
+with its own color, without merging into a single stroke.
 
-### Cenário 3b — Múltiplas FKs entre o mesmo par de tabelas (Edge Case)
+### Scenario 3b — Multiple FKs between the same pair of tables (Edge Case)
 
-No mesmo schema, adicione uma segunda coluna e uma segunda FK entre as
-*mesmas* duas tabelas (ex.: `pedidos` ganha `substituto_cliente_id` e uma
-segunda `add fk pedidos substituto_cliente_id references clientes id`).
+In the same schema, add a second column and a second FK between the
+*same* two tables (e.g. `pedidos` gains `substituto_cliente_id` and a
+second `add fk pedidos substituto_cliente_id references clientes id`).
 
-**Esperado**: as duas FKs entre `pedidos` e `clientes` aparecem como duas
-linhas em pistas distintas, cada uma com sua cor, mesmo compartilhando
-origem e destino.
+**Expected**: the two FKs between `pedidos` and `clientes` appear as two
+lines in distinct lanes, each with its color, even when sharing
+source and target.
 
-## Cenário 4 — Auto-relacionamento (Edge Case)
+## Scenario 4 — Self-relationship (Edge Case)
 
 ```
 create table funcionarios
@@ -87,13 +87,13 @@ add column funcionarios gerente_id int
 add fk funcionarios gerente_id references funcionarios id
 ```
 
-**Esperado**: o laço do relacionamento é desenhado em volta da própria
-tabela `funcionarios`, sem cruzar nenhuma outra tabela, com a seta apontando
-de volta para `funcionarios`.
+**Expected**: the relationship loop is drawn around the
+`funcionarios` table itself, without crossing any other table, with the arrow
+pointing back at `funcionarios`.
 
-## Cenário 5 — Sem regressão em schema simples (FR-006 / SC-004)
+## Scenario 5 — No regression on simple schema (FR-006 / SC-004)
 
-Em um projeto novo, crie apenas:
+In a new project, create only:
 
 ```
 create table a
@@ -103,40 +103,40 @@ add column b a_id int
 add fk b a_id references a id
 ```
 
-**Esperado**: o grafo de 2 tabelas lado a lado é desenhado exatamente como
-antes da correção (linha reta entre as duas, sem desvios desnecessários).
+**Expected**: the 2-table side-by-side graph is drawn exactly as
+before the fix (straight line between the two, no unnecessary detours).
 
-## Cenário 6 — Projeto salvo antes da correção (FR-007 / SC-005)
+## Scenario 6 — Project saved before the fix (FR-007 / SC-005)
 
-1. Antes de aplicar a implementação (ou usando uma cópia de backup de um
-   projeto já existente em `lazyforge_projects/`), abra esse projeto no
-   editor já corrigido.
+1. Before applying the implementation (or using a backup copy of an
+   already existing project under `lazyforge_projects/`), open that project in
+   the already fixed editor.
 
-**Esperado**: o projeto carrega normalmente e o grafo é exibido sem erros,
-com o roteamento corrigido aplicado ao schema existente.
+**Expected**: the project loads normally and the graph is displayed without errors,
+with the corrected routing applied to the existing schema.
 
-## Cenário 7 — Desempenho em schema grande (FR-005)
+## Scenario 7 — Performance on large schema (FR-005)
 
-Crie ou carregue um schema com dezenas de tabelas e vários relacionamentos
-cruzados (pode ser gerado repetindo o padrão do Cenário 1 em lote, via
-histórico de comandos).
+Create or load a schema with dozens of tables and several crossed
+relationships (can be generated by repeating Scenario 1's pattern in batch, via
+command history).
 
-**Esperado**: a navegação e o redesenho do grafo após cada comando continuam
-perceptivelmente instantâneos (referência: abaixo de ~100ms), sem
-travamentos perceptíveis.
+**Expected**: navigation and graph redraw after each command remain
+perceptibly instantaneous (reference: under ~100ms), without
+noticeable freezes.
 
-## Cenário 8 — Desvio ao redor de uma linha inteira de tabelas (Edge Case)
+## Scenario 8 — Detour around an entire row of tables (Edge Case)
 
-Crie um schema largo: uma linha do grafo com 3+ tabelas lado a lado (sem
-relação entre si) e, em outra linha, duas tabelas cuja única relação precisa
-desviar por fora de toda a linha intermediária para não cruzá-la.
+Create a wide schema: one graph row with 3+ tables side by side (no
+relation between them) and, on another row, two tables whose only relation needs
+to detour outside the entire intermediate row to avoid crossing it.
 
-**Esperado**: a linha de relacionamento contorna a linha inteira de tabelas
-(pelas laterais ou por cima/baixo do corredor), sem cruzar nenhuma delas.
+**Expected**: the relationship line goes around the entire row of tables
+(via the sides or above/below the corridor), without crossing any of them.
 
-## Critério de aceite geral
+## Overall acceptance criterion
 
-A correção é considerada validada quando todos os 8 cenários acima (incluindo
-3b) produzem o resultado esperado na mesma sessão de teste manual, sem
-necessidade de reiniciar o processo entre eles (apenas comandos novos no
-editor já aberto).
+The fix is considered validated when all 8 scenarios above (including
+3b) produce the expected result in the same manual test session, without
+needing to restart the process between them (only new commands in the
+already open editor).

@@ -1,5 +1,5 @@
-// Testes de funcionalidade: histórico de comandos, "help", encadeamento com
-// " - " e tratamento de comando inválido/vazio.
+// Testes de feature: command history, "help", encadeamento com
+// " - " and handling of invalid/empty commands.
 import 'package:lazy_forge/src/components/editor/models/schema_model.dart';
 import 'package:lazy_forge/src/components/editor/providers/editor_provider.dart';
 import 'package:lazy_forge/src/services/storage/project_storage.dart';
@@ -79,7 +79,7 @@ void main() {
 
       expect(editor.lastCommandFailed, isTrue);
       expect(editor.schemaState.findTableByName('should_not_run'), isNull);
-      // O primeiro comando da cadeia já tinha sido aplicado antes da falha.
+      // The first command in the chain was already applied before the failure.
       expect(editor.schemaState.findTableByName('users'), isNotNull);
     });
 
