@@ -27,7 +27,8 @@ SchemaState _loadSchemaRelacoes() {
   expect(
     _projectFile.existsSync(),
     isTrue,
-    reason: 'expected ${_projectFile.path} — populate dbs_schema_lazyforges first',
+    reason:
+        'expected ${_projectFile.path} — populate dbs_schema_lazyforges first',
   );
   final raw = jsonDecode(_projectFile.readAsStringSync());
   expect(raw, isA<Map>());
@@ -37,70 +38,79 @@ SchemaState _loadSchemaRelacoes() {
 }
 
 void main() {
-  group('workspace schema_relacoes — graph visual analysis', () {
-    test('project has at least 12 tables and dense FK graph', () {
-      final schema = _loadSchemaRelacoes();
-      expect(schema.tables.length, greaterThanOrEqualTo(12));
+  // The real workspace only exists on the maintainer machine (not in CI).
+  final missingWorkspace = _projectFile.existsSync()
+      ? null
+      : 'workspace schema_relacoes.json not found (local-only fixture)';
 
-      var fkCount = 0;
-      for (final t in schema.tables) {
-        fkCount += t.foreignKeys.length;
-      }
-      expect(fkCount, greaterThanOrEqualTo(12));
-    });
+  group(
+    'workspace schema_relacoes — graph visual analysis',
+    skip: missingWorkspace,
+    () {
+      test('project has at least 12 tables and dense FK graph', () {
+        final schema = _loadSchemaRelacoes();
+        expect(schema.tables.length, greaterThanOrEqualTo(12));
 
-    test('nocterm paint: all table names and line art visible', () async {
-      final schema = _loadSchemaRelacoes();
+        var fkCount = 0;
+        for (final t in schema.tables) {
+          fkCount += t.foreignKeys.length;
+        }
+        expect(fkCount, greaterThanOrEqualTo(12));
+      });
 
-      await testNocterm(
-        'schema_relacoes graph',
-        (tester) async {
-          await tester.pumpComponent(
-            TableGraphLayoutComponent(schemaState: schema),
-          );
-          await tester.pump();
+      test('nocterm paint: all table names and line art visible', () async {
+        final schema = _loadSchemaRelacoes();
 
-          final state = tester.terminalState;
-          final text = state.getText();
-          final snapshot = tester.toSnapshot();
-
-          for (final table in schema.tables) {
-            expect(
-              state,
-              containsText(table.name),
-              reason: 'table ${table.name} should appear on canvas',
+        await testNocterm(
+          'schema_relacoes graph',
+          (tester) async {
+            await tester.pumpComponent(
+              TableGraphLayoutComponent(schemaState: schema),
             );
-          }
+            await tester.pump();
 
-          // FK columns that drive relationships should show in boxes.
-          expect(state, containsText('user_id'));
-          expect(state, containsText('order_id'));
-          expect(state, containsText('product_id'));
-          expect(state, containsText('category_id'));
-          expect(state, containsText('warehouse_id'));
-          expect(state, containsText('supplier_id'));
+            final state = tester.terminalState;
+            final text = state.getText();
+            final snapshot = tester.toSnapshot();
 
-          final hasLineArt =
-              text.contains('-') ||
-              text.contains('|') ||
-              text.contains('+') ||
-              text.contains('>') ||
-              text.contains('<') ||
-              text.contains('^') ||
-              text.contains('v');
-          expect(hasLineArt, isTrue);
-          expect(snapshot, isNotEmpty);
+            for (final table in schema.tables) {
+              expect(
+                state,
+                containsText(table.name),
+                reason: 'table ${table.name} should appear on canvas',
+              );
+            }
 
-          // Print canvas for authorized visual review (agent/maintainer).
-          // ignore: avoid_print
-          print('\n=== schema_relacoes graph canvas ===\n');
-          // ignore: avoid_print
-          print(tester.renderToString());
-        },
-        // Dense multi-row graph needs a large virtual terminal so table boxes
-        // are not clipped off-canvas during visual inspection.
-        size: const Size(220, 80),
-      );
-    });
-  });
+            // FK columns that drive relationships should show in boxes.
+            expect(state, containsText('user_id'));
+            expect(state, containsText('order_id'));
+            expect(state, containsText('product_id'));
+            expect(state, containsText('category_id'));
+            expect(state, containsText('warehouse_id'));
+            expect(state, containsText('supplier_id'));
+
+            final hasLineArt =
+                text.contains('-') ||
+                text.contains('|') ||
+                text.contains('+') ||
+                text.contains('>') ||
+                text.contains('<') ||
+                text.contains('^') ||
+                text.contains('v');
+            expect(hasLineArt, isTrue);
+            expect(snapshot, isNotEmpty);
+
+            // Print canvas for authorized visual review (agent/maintainer).
+            // ignore: avoid_print
+            print('\n=== schema_relacoes graph canvas ===\n');
+            // ignore: avoid_print
+            print(tester.renderToString());
+          },
+          // Dense multi-row graph needs a large virtual terminal so table boxes
+          // are not clipped off-canvas during visual inspection.
+          size: const Size(220, 80),
+        );
+      });
+    },
+  );
 }
