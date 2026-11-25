@@ -190,8 +190,10 @@ class _InitComponent extends State<InitComponent> {
     }
 
     if (_isCreating) return false;
-    if (event.logicalKey == LogicalKey.escape) {
+    if (event.logicalKey == LogicalKey.escape ||
+        event.logicalKey == LogicalKey.keyQ) {
       shutdownApp();
+      return true;
     }
 
     if (event.logicalKey == LogicalKey.arrowDown) {
@@ -369,7 +371,17 @@ class _InitComponent extends State<InitComponent> {
         ..._buildProjectList(),
         const Divider(style: DividerStyle.single),
         const Text(
-          '↑/↓: selecionar | Enter: abrir | N: novo projeto | R: recarregar',
+          '↑/↓: selecionar | Enter: abrir | N: novo projeto | R: recarregar | Esc/q: sair',
+        ),
+        GestureDetector(
+          onTap: shutdownApp,
+          child: const Text(
+            '[ Esc/q: sair ]',
+            style: TextStyle(
+              color: Colors.brightYellow,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ],
     );

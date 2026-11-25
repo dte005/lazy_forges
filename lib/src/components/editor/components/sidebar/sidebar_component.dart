@@ -15,6 +15,7 @@ class SidebarComponent extends StatelessComponent {
     final items = <Component>[
       const Text(
         'SCHEMA',
+        softWrap: true,
         style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
       ),
       const Divider(style: DividerStyle.single),
@@ -30,6 +31,7 @@ class SidebarComponent extends StatelessComponent {
       final nodeChildren = <Component>[
         Text(
           '+ ${table.name}',
+          softWrap: true,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.cyan,
@@ -38,7 +40,7 @@ class SidebarComponent extends StatelessComponent {
       ];
 
       if (table.columns.isEmpty) {
-        nodeChildren.add(const Text('   - (sem colunas)'));
+        nodeChildren.add(const Text('   - (sem colunas)', softWrap: true));
       } else {
         for (final column in table.columns) {
           final tags = <String>[];
@@ -60,6 +62,7 @@ class SidebarComponent extends StatelessComponent {
           nodeChildren.add(
             Text(
               '   - ${column.name}: ${column.type}$enumText$tagText$descriptionText',
+              softWrap: true,
             ),
           );
 
@@ -70,6 +73,7 @@ class SidebarComponent extends StatelessComponent {
             nodeChildren.add(
               Text(
                 '      => ${fk.referenceTableName}.${fk.referenceColumnName}',
+                softWrap: true,
                 style: const TextStyle(color: Colors.brightCyan),
               ),
             );

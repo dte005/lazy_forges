@@ -24,6 +24,13 @@ class _LazyForgeApp extends State<LazyForgeApp> {
     });
   }
 
+  void _exitEditor() {
+    setState(() {
+      _activeProject = null;
+      _screen = Screen.init;
+    });
+  }
+
   @override
   Component build(BuildContext context) {
     switch (_screen) {
@@ -43,6 +50,7 @@ class _LazyForgeApp extends State<LazyForgeApp> {
           projectName: _activeProject!.name,
           initialSchema: _activeProject!.schemaState,
           projectStorage: _projectStorage,
+          onExit: _exitEditor,
         );
     }
   }

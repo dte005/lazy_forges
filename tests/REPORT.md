@@ -1,5 +1,46 @@
 # Test report — LazyForge
 
+## Update — T016, spec 002-fix-editor-chrome
+
+| Metric | Value |
+| --- | --- |
+| Features fully covered | 27 of 29 (93%) — F01–F26 and F28 |
+| Features with partial coverage | 1 (F27 sidebar soft-wrap: wrap asserted, scrollbar not) |
+| Features with no test | 1 (F29 scrollbars / opaque panels: visual only) |
+| Line coverage (lib/) | **not collected** — `coverage` is not in `pubspec.yaml` nor globally activated; needs approval for `dart pub global activate coverage` (or `dart pub add dev:coverage`) |
+| Tests (`dart test tests`) | 139 passing, 0 failing, 0 skipped |
+
+New files (no `lib/`, `bin/`, `pubspec.yaml` changes):
+
+- `tests/features/editor_chrome_feature_test.dart` — F25 (Esc / `q` on empty
+  input call `onExit`; `q` with text is typed and does not exit; Ctrl+Q ignored;
+  `sair` tap; Esc/`q` close overlay before exiting), F26 (Esc closes the most
+  recently opened of Help / BD types, in both opening orders; `[help]` toggle;
+  BD types content), F27 (sidebar soft-wrap in a 24-column box).
+- `tests/features/init_quit_feature_test.dart` — F28 (Esc/`q` quit only in
+  browse mode; `q` typed in create mode; Esc cancels creation).
+- `tests/unit/main_test.dart` — `LazyForgeApp`: Enter opens the editor, Esc and
+  `sair` return to the menu.
+
+All use a temp dir via `IOOverrides.runZoned`; the binary was never run.
+`nocterm_test` was used for key/text behavior only (explicit T016 request); no
+relationship-graph drawing was emulated or inspected.
+
+Notes / untestable in `lib` (reported, not changed):
+
+- `shutdownApp()` in `InitComponent` depends on the global `TerminalBinding`,
+  which does not exist in-process; the test can only assert that a quit was
+  requested (the handler throws). A injectable quit callback would make this
+  precise (suggestion for a spec).
+- Scrollbar visibility and opaque panel colors (FR-001/002/004) are only
+  verifiable visually; not asserted. `dart format tests` also reformats two
+  pre-existing graph test files; I reverted that to keep the diff scoped.
+- `dart analyze tests`: 5 `unnecessary_import` infos for
+  `package:nocterm/nocterm_test.dart` (same pattern as the existing graph tests;
+  the import is harmless).
+
+The sections below are from the previous issue #2 round and are unchanged.
+
 On-demand run of the **Dart Test Creator** agent, focused on the session that
 implemented the fix for issue #2 (graph relationship lines crossing tables,
 `specs/001-fix-graph-relation-lines/`). There were no tests under `tests/`
