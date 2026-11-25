@@ -17,14 +17,20 @@ class EditorComponent extends StatefulComponent {
     required this.projectName,
     required this.initialSchema,
     required this.projectStorage,
+    required this.onExit,
   });
   final String projectName;
   final SchemaState initialSchema;
   final ProjectStorage projectStorage;
 
+  /// Called when the user leaves the editor and returns to the entry menu.
+  final VoidCallback onExit;
+
   @override
   State<EditorComponent> createState() => _EditorComponent();
 }
+
+enum _Overlay { help, dbTypes }
 
 class _EditorComponent extends State<EditorComponent> {
   late final EditorProvider _editorProvider;
@@ -32,13 +38,18 @@ class _EditorComponent extends State<EditorComponent> {
   final ScrollController _editorVerticalController = ScrollController();
   final ScrollController _editorHorizontalController = ScrollController();
   final ScrollController _sidebarVerticalController = ScrollController();
-  bool _isHelpOpen = false;
-  bool _isDbTypesOpen = false;
+  // Open overlays in opening order; the last item is the most recently opened.
+  final List<_Overlay> _overlays = [];
+  bool get _isHelpOpen => _overlays.contains(_Overlay.help);
+  bool get _isDbTypesOpen => _overlays.contains(_Overlay.dbTypes);
   int _historyCursor = -1;
   String _historyDraft = '';
   StreamSubscription<ProcessSignal>? _sigintSubscription;
   String _copyFeedback = '';
   bool _copyFeedbackIsError = false;
+
+  static const Color _panelBackground = Colors.black;
+  static const TextStyle _panelTextStyle = TextStyle(color: Colors.white);
 
   static const List<String> _helpCommandTemplates = [
     'create table <table>',
@@ -77,18 +88,19 @@ class _EditorComponent extends State<EditorComponent> {
     });
   }
 
-  Component _buildDbTypesWindow() {
-    final types = _editorProvider.schemaState.getAllowedTypes().toList()
-      ..sort();
-    final rows = <Component>[];
-    for (final type in types) {
-      rows.add(Text(type));
-    }
-
+  /// Builds a floating panel with a solid background so the content behind
+  /// it never bleeds through. [children] go below the title divider.
+  Component _buildOpaquePanel({
+    required double width,
+    required String title,
+    required VoidCallback onClose,
+    required List<Component> children,
+  }) {
     return Container(
-      width: 32,
+      width: width,
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
       decoration: BoxDecoration(
+        color: _panelBackground,
         border: BoxBorder.all(style: BoxBorderStyle.double),
       ),
       child: Column(
@@ -96,16 +108,16 @@ class _EditorComponent extends State<EditorComponent> {
         children: [
           Row(
             children: [
-              const Text(
-                'BD TYPES',
-                style: TextStyle(
+              Text(
+                title,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.cyan,
                 ),
               ),
               const Spacer(),
               GestureDetector(
-                onTap: _closeDbTypesWindow,
+                onTap: onClose,
                 child: const Text(
                   'X',
                   style: TextStyle(
@@ -117,13 +129,29 @@ class _EditorComponent extends State<EditorComponent> {
             ],
           ),
           const Divider(style: DividerStyle.single),
-          Text('DB: ${_editorProvider.schemaState.databaseEngine.name}'),
-          const Divider(style: DividerStyle.single),
-          ...rows,
-          const Divider(style: DividerStyle.single),
-          const Text('Esc fecha'),
+          ...children,
         ],
       ),
+    );
+  }
+
+  Component _buildDbTypesWindow() {
+    final types = _editorProvider.schemaState.getAllowedTypes().toList()
+      ..sort();
+    return _buildOpaquePanel(
+      width: 32,
+      title: 'BD TYPES',
+      onClose: _closeDbTypesWindow,
+      children: [
+        Text(
+          'DB: ${_editorProvider.schemaState.databaseEngine.name}',
+          style: _panelTextStyle,
+        ),
+        const Divider(style: DividerStyle.single),
+        for (final type in types) Text(type, style: _panelTextStyle),
+        const Divider(style: DividerStyle.single),
+        const Text('Esc fecha', style: _panelTextStyle),
+      ],
     );
   }
 
@@ -132,9 +160,13 @@ class _EditorComponent extends State<EditorComponent> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: SingleChildScrollView(
+          child: Scrollbar(
             controller: _sidebarVerticalController,
-            child: SidebarComponent(schemas: _editorProvider.schemaState),
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _sidebarVerticalController,
+              child: SidebarComponent(schemas: _editorProvider.schemaState),
+            ),
           ),
         ),
         GestureDetector(
@@ -209,31 +241,49 @@ class _EditorComponent extends State<EditorComponent> {
     }
   }
 
-  void _toggleHelpWindow() {
+  void _openOverlay(_Overlay overlay) {
     setState(() {
-      _isHelpOpen = !_isHelpOpen;
+      _overlays
+        ..remove(overlay)
+        ..add(overlay);
     });
+  }
+
+  void _closeOverlay(_Overlay overlay) {
+    if (!_overlays.contains(overlay)) return;
+    setState(() {
+      _overlays.remove(overlay);
+    });
+  }
+
+  /// Closes the most recently opened overlay; returns false if none is open.
+  bool _popTopOverlay() {
+    if (_overlays.isEmpty) return false;
+    setState(() {
+      _overlays.removeLast();
+    });
+    return true;
+  }
+
+  void _toggleHelpWindow() {
+    if (_isHelpOpen) {
+      _closeOverlay(_Overlay.help);
+    } else {
+      _openOverlay(_Overlay.help);
+    }
   }
 
   void _toggleDbTypesWindow() {
-    setState(() {
-      _isDbTypesOpen = !_isDbTypesOpen;
-    });
+    if (_isDbTypesOpen) {
+      _closeOverlay(_Overlay.dbTypes);
+    } else {
+      _openOverlay(_Overlay.dbTypes);
+    }
   }
 
-  void _closeHelpWindow() {
-    if (!_isHelpOpen) return;
-    setState(() {
-      _isHelpOpen = false;
-    });
-  }
+  void _closeHelpWindow() => _closeOverlay(_Overlay.help);
 
-  void _closeDbTypesWindow() {
-    if (!_isDbTypesOpen) return;
-    setState(() {
-      _isDbTypesOpen = false;
-    });
-  }
+  void _closeDbTypesWindow() => _closeOverlay(_Overlay.dbTypes);
 
   void _copyHelpCommandToInput(String command) {
     setState(() {
@@ -243,7 +293,7 @@ class _EditorComponent extends State<EditorComponent> {
       );
       _historyCursor = -1;
       _historyDraft = '';
-      _isHelpOpen = false;
+      _overlays.remove(_Overlay.help);
     });
   }
 
@@ -321,16 +371,15 @@ class _EditorComponent extends State<EditorComponent> {
       _editorHorizontalController.scrollDown(3);
       return true;
     }
-    if (event.logicalKey == LogicalKey.escape && _isHelpOpen) {
-      setState(() {
-        _isHelpOpen = false;
-      });
-      return true;
-    }
-    if (event.logicalKey == LogicalKey.escape && _isDbTypesOpen) {
-      setState(() {
-        _isDbTypesOpen = false;
-      });
+    // `q` acts as Esc only on an empty input so typed commands are never
+    // intercepted (onKeyEvent runs before text insertion).
+    final isLeaveKey =
+        event.logicalKey == LogicalKey.escape ||
+        (!event.isControlPressed &&
+            event.logicalKey == LogicalKey.keyQ &&
+            _commandController.text.isEmpty);
+    if (isLeaveKey) {
+      if (!_popTopOverlay()) component.onExit();
       return true;
     }
     return false;
@@ -346,49 +395,27 @@ class _EditorComponent extends State<EditorComponent> {
         ),
       );
     }
-    return Container(
+    return _buildOpaquePanel(
       width: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-      decoration: BoxDecoration(
-        border: BoxBorder.all(style: BoxBorderStyle.double),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'HELP',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyan,
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _closeHelpWindow,
-                child: const Text(
-                  'X',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Divider(style: DividerStyle.single),
-          const Text('Clique no comando para copiar no input'),
-          const Divider(style: DividerStyle.single),
-          ...commandItems,
-          const Divider(style: DividerStyle.single),
-          const Text('Historico: seta cima/baixo no input'),
-          const Text('Scroll editor: Ctrl + setas'),
-          const Text('Copiar input: Ctrl + C'),
-          const Text('Copiar feedback: Ctrl + E'),
-          const Text('ESC fecha help'),
-        ],
-      ),
+      title: 'HELP',
+      onClose: _closeHelpWindow,
+      children: [
+        const Text(
+          'Clique no comando para copiar no input',
+          style: _panelTextStyle,
+        ),
+        const Divider(style: DividerStyle.single),
+        ...commandItems,
+        const Divider(style: DividerStyle.single),
+        const Text(
+          'Historico: seta cima/baixo no input',
+          style: _panelTextStyle,
+        ),
+        const Text('Scroll editor: Ctrl + setas', style: _panelTextStyle),
+        const Text('Copiar input: Ctrl + C', style: _panelTextStyle),
+        const Text('Copiar feedback: Ctrl + E', style: _panelTextStyle),
+        const Text('ESC fecha help', style: _panelTextStyle),
+      ],
     );
   }
 
@@ -416,7 +443,7 @@ class _EditorComponent extends State<EditorComponent> {
             ),
             const Spacer(),
             GestureDetector(
-              onTap: () => shutdownApp(),
+              onTap: component.onExit,
               child: const Text(
                 'sair',
                 style: TextStyle(
@@ -453,13 +480,17 @@ class _EditorComponent extends State<EditorComponent> {
                       child: Stack(
                         children: [
                           Positioned.fill(
-                            child: SingleChildScrollView(
+                            child: Scrollbar(
                               controller: _editorVerticalController,
+                              thumbVisibility: true,
                               child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                controller: _editorHorizontalController,
-                                child: TableGraphLayoutComponent(
-                                  schemaState: _editorProvider.schemaState,
+                                controller: _editorVerticalController,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  controller: _editorHorizontalController,
+                                  child: TableGraphLayoutComponent(
+                                    schemaState: _editorProvider.schemaState,
+                                  ),
                                 ),
                               ),
                             ),
@@ -473,6 +504,9 @@ class _EditorComponent extends State<EditorComponent> {
                         ],
                       ),
                     ),
+                  ),
+                  _HorizontalScrollIndicator(
+                    controller: _editorHorizontalController,
                   ),
                   Row(
                     children: [
@@ -558,6 +592,59 @@ class _EditorComponent extends State<EditorComponent> {
         if (_isDbTypesOpen)
           Positioned(left: 1, bottom: 2, child: _buildDbTypesWindow()),
       ],
+    );
+  }
+}
+
+/// One-line horizontal scroll indicator (`◄▬▬░░░►`) for the graph canvas.
+///
+/// nocterm's `Scrollbar` only paints vertically, so this fills the gap. It
+/// renders nothing while the content fits the viewport.
+class _HorizontalScrollIndicator extends StatefulComponent {
+  const _HorizontalScrollIndicator({required this.controller});
+
+  final ScrollController controller;
+
+  @override
+  State<_HorizontalScrollIndicator> createState() =>
+      _HorizontalScrollIndicatorState();
+}
+
+class _HorizontalScrollIndicatorState
+    extends State<_HorizontalScrollIndicator> {
+  @override
+  void initState() {
+    super.initState();
+    component.controller.addListener(_onScrollChanged);
+  }
+
+  @override
+  void dispose() {
+    component.controller.removeListener(_onScrollChanged);
+    super.dispose();
+  }
+
+  // Metrics change during layout, so rebuild on the next frame.
+  void _onScrollChanged() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  Component build(BuildContext context) {
+    final controller = component.controller;
+    final max = controller.maxScrollExtent;
+    final viewport = controller.viewportDimension;
+    final track = viewport.floor() - 2;
+    if (max <= 0 || track < 2) return const SizedBox(height: 0);
+
+    final thumb = (track * viewport / (viewport + max)).round().clamp(1, track);
+    final room = track - thumb;
+    final start = (room * (controller.offset / max)).round().clamp(0, room);
+    return Text(
+      '◄${'░' * start}${'▬' * thumb}${'░' * (room - start)}►',
+      style: const TextStyle(color: Colors.cyan),
     );
   }
 }

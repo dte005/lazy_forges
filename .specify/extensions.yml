@@ -1,0 +1,8 @@
+hooks:
+  after_analyze:
+    - extension: lazyforge-local
+      command: speckit.analyze-fix
+      enabled: true
+      optional: false
+      description: Auto-fix mechanical analyze findings, ask the owner about behavior findings, print the pending report.
+      prompt: Run the speckit-analyze-fix skill on the analysis report just produced.

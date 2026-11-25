@@ -45,6 +45,18 @@ With hot reload:
 dart --enable-vm-service bin/lazy_forge.dart
 ```
 
+## Releasing (maintainers)
+
+Publishing to pub.dev is automated through GitHub Actions. Bump `version` in
+`pubspec.yaml` (and `CHANGELOG.md`), merge to `master`, then push a matching tag:
+
+```bash
+git tag v1.0.2 && git push origin v1.0.2
+```
+
+The workflow fails if the tag differs from the `pubspec.yaml` version, and runs
+`dart analyze` and `dart test tests` before publishing.
+
 ## Main commands
 
 - `create table <table> [--autoincrement]`

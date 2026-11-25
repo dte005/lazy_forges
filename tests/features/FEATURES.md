@@ -37,11 +37,21 @@ Status: **Covered** (happy path + error/edge, all passing), **Partial**
 | F22 | Graph layout (row grouping by FK dependency) | code (`graph_layout.dart`) | `tests/unit/components/editor/components/table/graph_layout_test.dart` | Covered |
 | F23 | Graph relationship line routing without crossing tables | code (`graph_routing.dart`) — issue #2 | `tests/unit/components/editor/components/table/graph_routing_test.dart` | Covered |
 | F24 | `SchemaState` / `TableDef` / `ColumnDef` `toJson`/`fromJson` (round-trip) | code (`schema_model.dart`) | `tests/unit/components/editor/models/schema_model_test.dart` | Covered |
+| F25 | Leave the editor: Esc / `q` on empty input / `sair` call `onExit`; `q` with text is typed; Ctrl+Q ignored; `LazyForgeApp` returns to the menu (spec 002) | spec 002 + code (`editor_component.dart`, `main.dart`) | `tests/features/editor_chrome_feature_test.dart`, `tests/unit/main_test.dart` | Covered |
+| F26 | Overlay stacking: Help and BD types open together; Esc/`q` closes the most recently opened first, then exits; `[help]` toggles (spec 002) | spec 002 + code | `tests/features/editor_chrome_feature_test.dart` | Covered |
+| F27 | Sidebar soft-wrap of long rows (spec 002) | spec 002 + code (`sidebar_component.dart`) | `tests/features/editor_chrome_feature_test.dart` | Partial (wrap only; scrollbar not asserted) |
+| F28 | Init menu quit: Esc/`q` quit only in browse mode, never while typing a name; Esc cancels creation (spec 002) | spec 002 + code (`init_component.dart`) | `tests/features/init_quit_feature_test.dart` | Covered |
+| F29 | Graph/sidebar scrollbars and opaque overlay panels (spec 002, US1/US3) | spec 002 + code | — | No test (purely visual; graph emulation not authorized) |
 
 ## Notes
+
+- F25–F28 use `nocterm_test` in-process (key and text behavior only, no graph
+  drawing) at the maintainer's explicit request for T016. `shutdownApp()` has no
+  `TerminalBinding` in-process, so F28 detects "quit requested" as an error
+  thrown by the key handler.
 
 - F22/F23 do not have a dedicated user command; they are covered via the public
   API of the pure modules (`GraphLayoutEngine`, `GraphRoutingEngine`), which is
   the visible graph behavior (without depending on `nocterm`/TUI).
-- `nocterm` screens (key flows on the editor screen, interactive Help) were not
-  covered in this round — see "Open items" in `tests/REPORT.md`.
+- Remaining screen flows (command entry through the TextField, history arrows)
+  are still not covered at the widget level — see `tests/REPORT.md`.

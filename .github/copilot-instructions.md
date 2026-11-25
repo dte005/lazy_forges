@@ -157,6 +157,7 @@ These skills usually need packages **outside** the current `pubspec`
 | Technical plan | `speckit-plan` | `.github/skills/speckit-plan/SKILL.md` |
 | Tasks | `speckit-tasks` | `.github/skills/speckit-tasks/SKILL.md` |
 | Cross-artifact analysis | `speckit-analyze` | `.github/skills/speckit-analyze/SKILL.md` |
+| Post-analyze remediation (auto via `after_analyze` hook in `.specify/extensions.yml`) | `speckit-analyze-fix` | `.github/skills/speckit-analyze-fix/SKILL.md` |
 | Implement tasks | `speckit-implement` | `.github/skills/speckit-implement/SKILL.md` |
 | Converge gaps vs code | `speckit-converge` | `.github/skills/speckit-converge/SKILL.md` |
 | Checklist | `speckit-checklist` | `.github/skills/speckit-checklist/SKILL.md` |
@@ -285,7 +286,9 @@ Order:
 2. `/speckit-clarify` — only if real ambiguity remains
 3. `/speckit-plan` — real code layout + Constitution Check (English)
 4. `/speckit-tasks` — small tasks, scope only (English)
-5. `/speckit-analyze` — read-only; fix docs if needed
+5. `/speckit-analyze` — read-only; then the `speckit-analyze-fix` hook runs:
+   auto-fixes mechanical findings (order, `[P]`, tags, wording), asks the owner
+   about behavior/business-rule/visual findings, prints a final pending report
 6. `/speckit-implement` — only if Planned and Constitution Check PASS
 
 When done and manually validated, set the spec status to `Implemented`.
