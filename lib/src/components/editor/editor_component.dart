@@ -37,6 +37,8 @@ class _EditorComponent extends State<EditorComponent> {
   final TextEditingController _commandController = TextEditingController();
   final ScrollController _editorVerticalController = ScrollController();
   final ScrollController _editorHorizontalController = ScrollController();
+  // Last pointer position while the right button is held; null when idle.
+  ({int x, int y})? _panAnchor;
   final ScrollController _sidebarVerticalController = ScrollController();
   // Open overlays in opening order; the last item is the most recently opened.
   final List<_Overlay> _overlays = [];
@@ -338,6 +340,29 @@ class _EditorComponent extends State<EditorComponent> {
     });
   }
 
+  // Right-button drag pans the canvas (grab-and-drag). The drag ends on the
+  // first event without the right button, even after a release outside.
+  void _handleCanvasPointer(MouseEvent event) {
+    if (!event.buttons.contains(MouseButton.right)) {
+      _panAnchor = null;
+      return;
+    }
+    final anchor = _panAnchor;
+    _panAnchor = (x: event.x, y: event.y);
+    if (anchor == null) return;
+    _panBy(_editorHorizontalController, anchor.x - event.x);
+    _panBy(_editorVerticalController, anchor.y - event.y);
+  }
+
+  void _panBy(ScrollController controller, int delta) {
+    if (delta == 0) return;
+    final target = (controller.offset + delta).clamp(
+      0.0,
+      controller.maxScrollExtent,
+    );
+    controller.jumpTo(target);
+  }
+
   bool _handleCommandInputKeyEvent(KeyboardEvent event) {
     if (event.isControlPressed && event.logicalKey == LogicalKey.keyC) {
       _copyInputToClipboard();
@@ -355,21 +380,25 @@ class _EditorComponent extends State<EditorComponent> {
       _navigateHistory(up: false);
       return true;
     }
-    if (event.isControlPressed && event.logicalKey == LogicalKey.arrowUp) {
-      _editorVerticalController.scrollUp(3);
+    if (event.logicalKey == LogicalKey.pageUp) {
+      _editorVerticalController.pageUp();
       return true;
     }
-    if (event.isControlPressed && event.logicalKey == LogicalKey.arrowDown) {
-      _editorVerticalController.scrollDown(3);
+    if (event.logicalKey == LogicalKey.pageDown) {
+      _editorVerticalController.pageDown();
       return true;
     }
-    if (event.isControlPressed && event.logicalKey == LogicalKey.arrowLeft) {
-      _editorHorizontalController.scrollUp(3);
-      return true;
-    }
-    if (event.isControlPressed && event.logicalKey == LogicalKey.arrowRight) {
-      _editorHorizontalController.scrollDown(3);
-      return true;
+    // Left/Right pan the canvas only on an empty input; otherwise the text
+    // field keeps them for cursor movement.
+    if (_commandController.text.isEmpty) {
+      if (event.logicalKey == LogicalKey.arrowLeft) {
+        _editorHorizontalController.scrollUp(_scrollStep);
+        return true;
+      }
+      if (event.logicalKey == LogicalKey.arrowRight) {
+        _editorHorizontalController.scrollDown(_scrollStep);
+        return true;
+      }
     }
     // `q` acts as Esc only on an empty input so typed commands are never
     // intercepted (onKeyEvent runs before text insertion).
@@ -411,7 +440,14 @@ class _EditorComponent extends State<EditorComponent> {
           'Historico: seta cima/baixo no input',
           style: _panelTextStyle,
         ),
-        const Text('Scroll editor: Ctrl + setas', style: _panelTextStyle),
+        const Text(
+          'Navegar: PageUp/PageDown, setas esq/dir (input vazio)',
+          style: _panelTextStyle,
+        ),
+        const Text(
+          'Mouse: setas nas barras, botao direito arrasta',
+          style: _panelTextStyle,
+        ),
         const Text('Copiar input: Ctrl + C', style: _panelTextStyle),
         const Text('Copiar feedback: Ctrl + E', style: _panelTextStyle),
         const Text('ESC fecha help', style: _panelTextStyle),
@@ -476,37 +512,55 @@ class _EditorComponent extends State<EditorComponent> {
                   _buildEditorHeader(),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 1, right: 1),
-                      child: Stack(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Positioned.fill(
-                            child: Scrollbar(
-                              controller: _editorVerticalController,
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                controller: _editorVerticalController,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  controller: _editorHorizontalController,
-                                  child: TableGraphLayoutComponent(
-                                    schemaState: _editorProvider.schemaState,
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: MouseRegion(
+                                    onHover: _handleCanvasPointer,
+                                    onExit: (_) => _panAnchor = null,
+                                    child: SingleChildScrollView(
+                                      controller: _editorVerticalController,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        controller: _editorHorizontalController,
+                                        child: TableGraphLayoutComponent(
+                                          schemaState:
+                                              _editorProvider.schemaState,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                if (_isHelpOpen)
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: _buildHelpWindow(),
+                                  ),
+                              ],
                             ),
                           ),
-                          if (_isHelpOpen)
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: _buildHelpWindow(),
+                          SizedBox(
+                            width: 1,
+                            child: _VerticalScrollIndicator(
+                              controller: _editorVerticalController,
                             ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  _HorizontalScrollIndicator(
-                    controller: _editorHorizontalController,
+                  Row(
+                    children: [
+                      _HorizontalScrollIndicator(
+                        controller: _editorHorizontalController,
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
@@ -596,6 +650,11 @@ class _EditorComponent extends State<EditorComponent> {
   }
 }
 
+// Lines/columns moved by one arrow-button or Left/Right step.
+const double _scrollStep = 3;
+
+const _scrollIndicatorStyle = TextStyle(color: Colors.cyan);
+
 /// One-line horizontal scroll indicator (`◄▬▬░░░►`) for the graph canvas.
 ///
 /// nocterm's `Scrollbar` only paints vertically, so this fills the gap. It
@@ -642,9 +701,84 @@ class _HorizontalScrollIndicatorState
     final thumb = (track * viewport / (viewport + max)).round().clamp(1, track);
     final room = track - thumb;
     final start = (room * (controller.offset / max)).round().clamp(0, room);
-    return Text(
-      '◄${'░' * start}${'▬' * thumb}${'░' * (room - start)}►',
-      style: const TextStyle(color: Colors.cyan),
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => controller.scrollUp(_scrollStep),
+          child: const Text('◄', style: _scrollIndicatorStyle),
+        ),
+        Text(
+          '${'░' * start}${'▬' * thumb}${'░' * (room - start)}',
+          style: _scrollIndicatorStyle,
+        ),
+        GestureDetector(
+          onTap: () => controller.scrollDown(_scrollStep),
+          child: const Text('►', style: _scrollIndicatorStyle),
+        ),
+      ],
+    );
+  }
+}
+
+/// Vertical counterpart of [_HorizontalScrollIndicator]: `▲` and `▼` buttons
+/// around a track with a thumb. Renders nothing while the content fits.
+class _VerticalScrollIndicator extends StatefulComponent {
+  const _VerticalScrollIndicator({required this.controller});
+
+  final ScrollController controller;
+
+  @override
+  State<_VerticalScrollIndicator> createState() =>
+      _VerticalScrollIndicatorState();
+}
+
+class _VerticalScrollIndicatorState extends State<_VerticalScrollIndicator> {
+  @override
+  void initState() {
+    super.initState();
+    component.controller.addListener(_onScrollChanged);
+  }
+
+  @override
+  void dispose() {
+    component.controller.removeListener(_onScrollChanged);
+    super.dispose();
+  }
+
+  // Metrics change during layout, so rebuild on the next frame.
+  void _onScrollChanged() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  Component build(BuildContext context) {
+    final controller = component.controller;
+    final max = controller.maxScrollExtent;
+    final viewport = controller.viewportDimension;
+    final track = viewport.floor() - 2;
+    if (max <= 0 || track < 2) return const SizedBox(width: 1);
+
+    final thumb = (track * viewport / (viewport + max)).round().clamp(1, track);
+    final room = track - thumb;
+    final start = (room * (controller.offset / max)).round().clamp(0, room);
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => controller.scrollUp(_scrollStep),
+          child: const Text('▲', style: _scrollIndicatorStyle),
+        ),
+        for (var i = 0; i < track; i++)
+          Text(
+            i >= start && i < start + thumb ? '▬' : '░',
+            style: _scrollIndicatorStyle,
+          ),
+        GestureDetector(
+          onTap: () => controller.scrollDown(_scrollStep),
+          child: const Text('▼', style: _scrollIndicatorStyle),
+        ),
+      ],
     );
   }
 }

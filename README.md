@@ -77,6 +77,12 @@ The workflow fails if the tag differs from the `pubspec.yaml` version, and runs
 - `history`
 - `help`
 
+## Canvas navigation
+
+- Click the arrow buttons (`▲ ▼ ◄ ►`) at the ends of the scrollbars to move the graph 3 lines/columns per click. A scrollbar only appears when the graph overflows on that axis.
+- Hold the right mouse button and drag over the graph to pan it (the content follows the pointer). Some terminals may not forward right-button drag events; use the keyboard then.
+- `PageUp` / `PageDown` scroll the graph vertically by one page; `Left` / `Right` scroll it horizontally while the command input is empty.
+
 ## Persistence and export
 
 - Projects are saved automatically under `./lazyforge_projects` (current working directory).
