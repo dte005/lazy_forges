@@ -6,9 +6,22 @@ import './graph_layout.dart';
 import './graph_routing.dart';
 
 class TableGraphLayoutComponent extends StatelessComponent {
-  const TableGraphLayoutComponent({super.key, required this.schemaState});
+  const TableGraphLayoutComponent({
+    super.key,
+    required this.schemaState,
+    this.horizontalController,
+    this.viewportWidth = 0,
+  });
 
   final SchemaState schemaState;
+
+  /// Horizontal scroll state. The graph crops its own columns instead of using
+  /// a nested viewport, because nocterm drops the outer scroll offset when a
+  /// viewport is painted inside another one.
+  final ScrollController? horizontalController;
+
+  /// Visible width in columns, used to compute the horizontal scroll extent.
+  final int viewportWidth;
 
   static const List<Color> _relationPalette = <Color>[
     Colors.cyan,
@@ -287,9 +300,28 @@ class TableGraphLayoutComponent extends StatelessComponent {
       drawAt(arrow.x, arrow.y, arrowChar, color: edgeColor);
     }
 
+    final controller = horizontalController;
+    var skip = 0;
+    if (controller != null) {
+      final maxExtent = (canvasWidth - viewportWidth).clamp(0, canvasWidth);
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        controller.updateMetrics(
+          minScrollExtent: 0,
+          maxScrollExtent: maxExtent.toDouble(),
+          viewportDimension: viewportWidth.toDouble(),
+        );
+      });
+      skip = controller.offset.round().clamp(0, maxExtent);
+    }
+
     final lines = <Component>[];
     for (var rowIndex = 0; rowIndex < canvas.length; rowIndex++) {
-      lines.add(_buildCanvasLine(canvas[rowIndex], colorCanvas[rowIndex]));
+      lines.add(
+        _buildCanvasLine(
+          canvas[rowIndex].sublist(skip),
+          colorCanvas[rowIndex].sublist(skip),
+        ),
+      );
     }
 
     return Column(

@@ -37,8 +37,6 @@ class _EditorComponent extends State<EditorComponent> {
   final TextEditingController _commandController = TextEditingController();
   final ScrollController _editorVerticalController = ScrollController();
   final ScrollController _editorHorizontalController = ScrollController();
-  // Last pointer position while the right button is held; null when idle.
-  ({int x, int y})? _panAnchor;
   final ScrollController _sidebarVerticalController = ScrollController();
   // Open overlays in opening order; the last item is the most recently opened.
   final List<_Overlay> _overlays = [];
@@ -340,29 +338,6 @@ class _EditorComponent extends State<EditorComponent> {
     });
   }
 
-  // Right-button drag pans the canvas (grab-and-drag). The drag ends on the
-  // first event without the right button, even after a release outside.
-  void _handleCanvasPointer(MouseEvent event) {
-    if (!event.buttons.contains(MouseButton.right)) {
-      _panAnchor = null;
-      return;
-    }
-    final anchor = _panAnchor;
-    _panAnchor = (x: event.x, y: event.y);
-    if (anchor == null) return;
-    _panBy(_editorHorizontalController, anchor.x - event.x);
-    _panBy(_editorVerticalController, anchor.y - event.y);
-  }
-
-  void _panBy(ScrollController controller, int delta) {
-    if (delta == 0) return;
-    final target = (controller.offset + delta).clamp(
-      0.0,
-      controller.maxScrollExtent,
-    );
-    controller.jumpTo(target);
-  }
-
   bool _handleCommandInputKeyEvent(KeyboardEvent event) {
     if (event.isControlPressed && event.logicalKey == LogicalKey.keyC) {
       _copyInputToClipboard();
@@ -520,19 +495,24 @@ class _EditorComponent extends State<EditorComponent> {
                             child: Stack(
                               children: [
                                 Positioned.fill(
-                                  child: MouseRegion(
-                                    onHover: _handleCanvasPointer,
-                                    onExit: (_) => _panAnchor = null,
-                                    child: SingleChildScrollView(
-                                      controller: _editorVerticalController,
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        controller: _editorHorizontalController,
-                                        child: TableGraphLayoutComponent(
-                                          schemaState:
-                                              _editorProvider.schemaState,
-                                        ),
-                                      ),
+                                  child: SingleChildScrollView(
+                                    controller: _editorVerticalController,
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) =>
+                                          ListenableBuilder(
+                                            listenable:
+                                                _editorHorizontalController,
+                                            builder: (context, _) =>
+                                                TableGraphLayoutComponent(
+                                                  schemaState: _editorProvider
+                                                      .schemaState,
+                                                  horizontalController:
+                                                      _editorHorizontalController,
+                                                  viewportWidth: constraints
+                                                      .maxWidth
+                                                      .floor(),
+                                                ),
+                                          ),
                                     ),
                                   ),
                                 ),
