@@ -1,3 +1,10 @@
+## 1.0.4
+
+- Fix: the editor canvas did not move with the scrollbar arrows, PageUp/PageDown
+  or the mouse wheel (nested viewports dropped the vertical scroll offset).
+- Editor: horizontal scrolling now crops the graph inside a single viewport.
+- Editor: right-button drag panning was removed.
+
 ## 1.0.3
 
 - Fix: navigating large schemas on the editor canvas (regression from 1.0.2,
